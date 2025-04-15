@@ -3,11 +3,25 @@ import { useTodo } from '../../context/TodoContext';
 import TodoItem from './TodoItem';
 import toast from 'react-hot-toast';
 
-const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange }) => {
+const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange, onViewHistory }) => {
     const { updateTodoStatus, deleteTodo } = useTodo();
     const [actionLoading, setActionLoading] = useState(null);
+    const [statusModal, setStatusModal] = useState({ visible: false, todoId: null, currentStatus: null });
 
     const handleStatusChange = async (id, status) => {
+        // If moving to completed, show comment modal
+        if (status === 'completed') {
+            const todo = todos.find(t => t._id === id);
+            setStatusModal({
+                visible: true,
+                todoId: id,
+                currentStatus: todo.status,
+                newStatus: status
+            });
+            return;
+        }
+
+        // Otherwise update directly
         setActionLoading(id);
         try {
             await updateTodoStatus(id, status);
@@ -17,6 +31,20 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
             console.error('Failed to update status:', error);
         } finally {
             setActionLoading(null);
+        }
+    };
+
+    const handleStatusModalSubmit = async (comment) => {
+        setActionLoading(statusModal.todoId);
+        try {
+            await updateTodoStatus(statusModal.todoId, statusModal.newStatus, comment);
+            toast.success(`Status updated to ${statusModal.newStatus.replace('_', ' ')}`);
+        } catch (error) {
+            toast.error('Failed to update status');
+            console.error('Failed to update status:', error);
+        } finally {
+            setActionLoading(null);
+            setStatusModal({ visible: false, todoId: null, currentStatus: null });
         }
     };
 
@@ -159,6 +187,51 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                         >
                             Next
                         </button>
+                    </div>
+                </div>
+            )}
+
+            {/* Status Change Modal */}
+            {statusModal.visible && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    <div className="flex items-center justify-center min-h-screen">
+                        <div className="fixed inset-0 bg-black opacity-50"></div>
+
+                        <div className="relative bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full">
+                            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                                Complete this task?
+                            </h3>
+
+                            <div className="mb-4">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    Add a comment (optional)
+                                </label>
+                                <textarea
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                                    rows="3"
+                                    placeholder="Add details about this status change..."
+                                    id="statusComment"
+                                ></textarea>
+                            </div>
+
+                            <div className="flex justify-end space-x-3">
+                                <button
+                                    className="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    onClick={() => setStatusModal({ visible: false, todoId: null })}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700"
+                                    onClick={() => {
+                                        const comment = document.getElementById('statusComment').value;
+                                        handleStatusModalSubmit(comment);
+                                    }}
+                                >
+                                    Complete Task
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

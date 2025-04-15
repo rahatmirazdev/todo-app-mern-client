@@ -135,12 +135,15 @@ export const TodoProvider = ({ children }) => {
     }, [todos]);
 
     // Update todo status
-    const updateTodoStatus = useCallback(async (id, status) => {
+    const updateTodoStatus = useCallback(async (id, status, comment = '') => {
         setLoading(true);
         setError(null);
 
         try {
-            const response = await axiosPrivate.patch(`/todos/${id}/status`, { status });
+            const response = await axiosPrivate.patch(`/todos/${id}/status`, {
+                status,
+                comment
+            });
 
             // Update todo in the list
             setTodos(todos.map(todo =>

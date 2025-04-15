@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, isLoading }) => {
+const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoading }) => {
     const [showDetails, setShowDetails] = useState(false);
 
     // Format date
@@ -159,6 +159,13 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, isLoading }) => {
                             disabled={isLoading}
                         >
                             Delete
+                        </button>
+                        <button
+                            onClick={() => onViewHistory(todo._id, todo.title)}
+                            className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-300"
+                            disabled={isLoading}
+                        >
+                            History
                         </button>
                     </div>
                 )}
