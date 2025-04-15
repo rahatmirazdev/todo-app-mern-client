@@ -163,7 +163,7 @@ export const TodoProvider = ({ children }) => {
         }
     }, [todos]);
 
-    // Update todo status
+    // Update todo status with recurring task support
     const updateTodoStatus = useCallback(async (id, status, comment = '') => {
         setLoading(true);
         setError(null);
@@ -174,12 +174,28 @@ export const TodoProvider = ({ children }) => {
                 comment
             });
 
-            // Update todo in the list
-            setTodos(todos.map(todo =>
-                todo._id === id ? response.data : todo
-            ));
-
-            return response.data;
+            // Check if response includes a new recurring task
+            if (response.data.newRecurringTask) {
+                // Add the new recurring task to the list
+                setTodos(prevTodos => [
+                    response.data.newRecurringTask,
+                    ...prevTodos.map(todo => 
+                        todo._id === id ? response.data.updatedTodo : todo
+                    )
+                ]);
+                
+                // Show notification about the new task
+                toast.success('Recurring task completed. New task created!');
+                
+                return response.data.updatedTodo;
+            } else {
+                // Update todo in the list (no recurring)
+                setTodos(todos.map(todo =>
+                    todo._id === id ? response.data : todo
+                ));
+                
+                return response.data;
+            }
         } catch (err) {
             setError(err.message || 'Failed to update todo status');
             console.error('Error updating todo status:', err);
@@ -187,7 +203,24 @@ export const TodoProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [todos]);
+    }, [todos, axiosPrivate]);
+
+    // New function to get recurring series
+    const getRecurringSeries = useCallback(async (recurringId) => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+            const response = await axiosPrivate.get(`/todos/series/${recurringId}`);
+            return response.data;
+        } catch (err) {
+            setError(err.message || 'Failed to fetch recurring series');
+            console.error('Error fetching recurring series:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [axiosPrivate]);
 
     // Update filters
     const updateFilters = useCallback((newFilters) => {
@@ -278,7 +311,8 @@ export const TodoProvider = ({ children }) => {
         updateFilters,
         updateSortConfig,
         changePage,
-        fetchAllTags
+        fetchAllTags,
+        getRecurringSeries
     };
 
     return (

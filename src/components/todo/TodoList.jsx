@@ -2,11 +2,13 @@ import { useState } from 'react';
 import { useTodo } from '../../context/TodoContext';
 import TodoTable from './TodoTable';
 import toast from 'react-hot-toast';
+import RecurringSeriesModal from './RecurringSeriesModal';
 
 const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange, onViewHistory }) => {
     const { updateTodoStatus, deleteTodo } = useTodo();
     const [actionLoading, setActionLoading] = useState(null);
     const [statusModal, setStatusModal] = useState({ visible: false, todoId: null, currentStatus: null });
+    const [seriesModal, setSeriesModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
 
     const handleStatusChange = async (id, status) => {
         // If moving to completed, show comment modal
@@ -88,6 +90,15 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
         );
     };
 
+    // Handle viewing recurring series
+    const handleViewSeries = (todoId, todoTitle) => {
+        setSeriesModal({
+            isOpen: true,
+            todoId,
+            todoTitle
+        });
+    };
+
     if (loading) {
         return (
             <div className="flex justify-center items-center h-64 bg-white dark:bg-gray-800 rounded-md shadow p-6">
@@ -131,6 +142,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                     handleDelete={handleDelete}
                     onEdit={onEdit}
                     onViewHistory={onViewHistory}
+                    onViewSeries={handleViewSeries}
                     actionLoading={actionLoading}
                 />
             </div>
@@ -205,6 +217,16 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Recurring Series Modal */}
+            {seriesModal.isOpen && (
+                <RecurringSeriesModal
+                    isOpen={seriesModal.isOpen}
+                    onClose={() => setSeriesModal({ isOpen: false, todoId: null, todoTitle: '' })}
+                    todoId={seriesModal.todoId}
+                    todoTitle={seriesModal.todoTitle}
+                />
             )}
         </div>
     );
