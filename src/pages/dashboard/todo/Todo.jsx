@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTodo } from '../../../context/TodoContext';
 import TodoList from '../../../components/todo/TodoList';
@@ -27,8 +27,10 @@ const Todo = () => {
     const [initialLoad, setInitialLoad] = useState(true);
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'kanban'
     const [historyModal, setHistoryModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
+    const autoFocusSearch = useRef(true);
+    const [shouldFocusSearch, setShouldFocusSearch] = useState(true);
 
-    // Apply URL parameters as filters
+    // Apply URL parameters as filters and focus search box on initial load
     useEffect(() => {
         if (initialLoad) {
             const urlFilters = {
@@ -68,9 +70,19 @@ const Todo = () => {
                 updateFilters(urlFilters);
             }
 
-            fetchTodos().then(() => setInitialLoad(false));
+            fetchTodos().then(() => {
+                setInitialLoad(false);
+                // Set autoFocus flag to true when component first mounts
+                autoFocusSearch.current = true;
+            });
         }
     }, [fetchTodos, initialLoad, searchParams, updateFilters]);
+
+    // Reset focus flag when this component unmounts and remounts
+    useEffect(() => {
+        setShouldFocusSearch(true);
+        return () => setShouldFocusSearch(false);
+    }, []);
 
     // Show any API errors as toast notifications
     useEffect(() => {
@@ -82,6 +94,7 @@ const Todo = () => {
     // Handle the edit action
     const handleEditTodo = (todo) => {
         setEditingTodo(todo);
+        setShouldFocusSearch(false); // Prevent refocusing search when editing
     };
 
     // Handle view history action
@@ -159,6 +172,7 @@ const Todo = () => {
                     onFilterChange={updateFilters}
                     onSearch={handleSearch}
                     isSearching={loading}
+                    autoFocus={shouldFocusSearch}
                 />
             )}
 

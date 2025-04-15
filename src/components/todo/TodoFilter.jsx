@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTodo } from '../../context/TodoContext';
 import debounce from 'lodash.debounce';
 
-const TodoFilter = ({ filters, onFilterChange, onSearch, isSearching }) => {
+const TodoFilter = ({ filters, onFilterChange, onSearch, isSearching, autoFocus = false }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { loading, allTags } = useTodo();
     const [isFiltersApplied, setIsFiltersApplied] = useState(false);
@@ -72,6 +72,23 @@ const TodoFilter = ({ filters, onFilterChange, onSearch, isSearching }) => {
             setSelectedTags([]);
         }
     }, [filters.tags]);
+
+    // Focus input when component mounts if autoFocus is true
+    useEffect(() => {
+        if (autoFocus && searchInputRef.current) {
+            // Focus immediately
+            searchInputRef.current.focus();
+
+            // Also try with a small delay as a fallback
+            const timer = setTimeout(() => {
+                if (searchInputRef.current) {
+                    searchInputRef.current.focus();
+                }
+            }, 100);
+
+            return () => clearTimeout(timer);
+        }
+    }, [autoFocus]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -230,6 +247,7 @@ const TodoFilter = ({ filters, onFilterChange, onSearch, isSearching }) => {
                             onChange={handleSearchChange}
                             onKeyDown={handleSearchKeyDown}
                             autoComplete="off"
+                            autoFocus={autoFocus}
                             className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-l-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                             disabled={isSearching}
                         />
