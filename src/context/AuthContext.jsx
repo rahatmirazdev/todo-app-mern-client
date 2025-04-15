@@ -8,6 +8,7 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [tokenValidated, setTokenValidated] = useState(false);
 
     useEffect(() => {
         // Check if user is logged in
@@ -18,27 +19,45 @@ export const AuthProvider = ({ children }) => {
                 const storedToken = localStorage.getItem('userToken');
 
                 if (storedUser && storedToken) {
-                    // Validate token with backend
-                    const response = await axiosPrivate.get('/auth/validate-token');
-                    if (response.data.valid) {
-                        setUser(JSON.parse(storedUser));
+                    // Only validate token if it hasn't been validated yet
+                    if (!tokenValidated) {
+                        try {
+                            // Validate token with backend
+                            const response = await axiosPrivate.get('/auth/validate-token');
+                            if (response.data.valid) {
+                                setUser(JSON.parse(storedUser));
+                                setTokenValidated(true);
+                            } else {
+                                // Token invalid, clear storage
+                                handleInvalidToken();
+                            }
+                        } catch (validationError) {
+                            // Handle token validation error (401, etc)
+                            console.warn('Token validation error:', validationError);
+                            handleInvalidToken();
+                        }
                     } else {
-                        // Token invalid, clear storage
-                        localStorage.removeItem('userInfo');
-                        localStorage.removeItem('userToken');
+                        // Token was already validated, just use stored user
+                        setUser(JSON.parse(storedUser));
                     }
                 }
             } catch (error) {
-                console.error('Error validating auth token:', error);
-                localStorage.removeItem('userInfo');
-                localStorage.removeItem('userToken');
+                console.error('Error checking authentication status:', error);
+                handleInvalidToken();
             } finally {
                 setLoading(false);
             }
         };
 
+        const handleInvalidToken = () => {
+            localStorage.removeItem('userInfo');
+            localStorage.removeItem('userToken');
+            setUser(null);
+            setTokenValidated(false);
+        };
+
         checkLoggedIn();
-    }, []);
+    }, [tokenValidated]);
 
     const login = useCallback(async (email, password) => {
         setLoading(true);
@@ -144,14 +163,23 @@ export const AuthProvider = ({ children }) => {
     const logout = useCallback(async (allDevices = false) => {
         setLoading(true);
         try {
-            await axiosPrivate.post('/auth/revoke-token', {});
-        } catch (error) {
-            console.error('Logout error:', error);
+            // Only try to revoke token if we're actually logged in
+            const token = localStorage.getItem('userToken');
+            if (token) {
+                try {
+                    await axiosPrivate.post('/auth/revoke-token', {});
+                } catch (error) {
+                    console.warn('Error revoking token:', error);
+                    // Continue with logout even if token revocation fails
+                }
+            }
         } finally {
             localStorage.removeItem('userInfo');
             localStorage.removeItem('userToken');
             setUser(null);
+            setTokenValidated(false);
             setLoading(false);
+            // Use a more controlled navigation approach without full page reload
             window.location.href = '/';
         }
     }, []);
