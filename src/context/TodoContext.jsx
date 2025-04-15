@@ -8,11 +8,15 @@ export const TodoProvider = ({ children }) => {
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [allTags, setAllTags] = useState([]);
     const [filters, setFilters] = useState({
         status: '',
         priority: '',
         category: '',
         search: '',
+        tags: null,
+        hasSubtasks: null,
+        completedSubtasks: null
     });
     const [pagination, setPagination] = useState({
         page: 1,
@@ -21,8 +25,10 @@ export const TodoProvider = ({ children }) => {
         pages: 0
     });
     const [sortConfig, setSortConfig] = useState({
-        field: 'createdAt',
-        direction: 'desc'
+        primaryField: 'createdAt',
+        primaryDirection: 'desc',
+        secondaryField: null,
+        secondaryDirection: 'asc'
     });
 
     const { user } = useAuth();
@@ -38,19 +44,42 @@ export const TodoProvider = ({ children }) => {
             // Build query params
             const params = new URLSearchParams();
 
-            // Add filters
+            // Add basic filters
             if (filters.status) params.append('status', filters.status);
             if (filters.priority) params.append('priority', filters.priority);
             if (filters.category) params.append('category', filters.category);
             if (filters.search) params.append('search', filters.search);
 
+            // Add tag filters
+            if (filters.tags) {
+                if (Array.isArray(filters.tags)) {
+                    filters.tags.forEach(tag => params.append('tags', tag));
+                } else {
+                    params.append('tags', filters.tags);
+                }
+            }
+
+            // Add subtask filters
+            if (filters.hasSubtasks) {
+                params.append('hasSubtasks', filters.hasSubtasks);
+            }
+
+            if (filters.completedSubtasks) {
+                params.append('completedSubtasks', filters.completedSubtasks);
+            }
+
             // Add pagination
             params.append('page', pagination.page);
             params.append('limit', pagination.limit);
 
-            // Add sorting
-            params.append('sortBy', sortConfig.field);
-            params.append('order', sortConfig.direction);
+            // Add sorting (primary and secondary)
+            params.append('sortBy', sortConfig.primaryField);
+            params.append('order', sortConfig.primaryDirection);
+
+            if (sortConfig.secondaryField) {
+                params.append('secondarySortBy', sortConfig.secondaryField);
+                params.append('secondaryOrder', sortConfig.secondaryDirection);
+            }
 
             const response = await axiosPrivate.get(`/todos?${params.toString()}`);
 
@@ -66,7 +95,7 @@ export const TodoProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [user, filters, pagination.page, pagination.limit, sortConfig]);
+    }, [user, filters, pagination.page, pagination.limit, sortConfig, axiosPrivate]);
 
     useEffect(() => {
         fetchTodos();
@@ -167,18 +196,70 @@ export const TodoProvider = ({ children }) => {
         setPagination(prev => ({ ...prev, page: 1 }));
     }, []);
 
-    // Update sort config
-    const updateSortConfig = useCallback((field) => {
-        setSortConfig(prev => ({
-            field,
-            direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
-        }));
+    // Enhanced sorting function to handle multi-column sorting
+    const updateSortConfig = useCallback((field, isSecondary = false) => {
+        setSortConfig(prev => {
+            // If clicking on current primary sort field
+            if (!isSecondary && prev.primaryField === field) {
+                // Toggle direction
+                return {
+                    ...prev,
+                    primaryDirection: prev.primaryDirection === 'asc' ? 'desc' : 'asc'
+                };
+            }
+
+            // If clicking on current secondary sort field
+            if (isSecondary && prev.secondaryField === field) {
+                // Toggle direction
+                return {
+                    ...prev,
+                    secondaryDirection: prev.secondaryDirection === 'asc' ? 'desc' : 'asc'
+                };
+            }
+
+            // If setting a new primary field
+            if (!isSecondary) {
+                return {
+                    ...prev,
+                    primaryField: field,
+                    primaryDirection: 'asc',
+                    // Move current primary to secondary if there isn't already a secondary
+                    secondaryField: prev.secondaryField || prev.primaryField !== field ? prev.primaryField : null,
+                };
+            }
+
+            // If setting a new secondary field
+            return {
+                ...prev,
+                secondaryField: field,
+                secondaryDirection: 'asc'
+            };
+        });
     }, []);
 
     // Change page
     const changePage = useCallback((newPage) => {
         setPagination(prev => ({ ...prev, page: newPage }));
     }, []);
+
+    // Function to fetch all tags
+    const fetchAllTags = useCallback(async () => {
+        if (!user) return;
+
+        try {
+            const response = await axiosPrivate.get('/todos/tags');
+            setAllTags(response.data.tags);
+        } catch (err) {
+            console.error('Error fetching tags:', err);
+        }
+    }, [user, axiosPrivate]);
+
+    // Fetch tags when user changes
+    useEffect(() => {
+        if (user) {
+            fetchAllTags();
+        }
+    }, [user, fetchAllTags]);
 
     // Context value
     const value = {
@@ -188,6 +269,7 @@ export const TodoProvider = ({ children }) => {
         filters,
         pagination,
         sortConfig,
+        allTags,
         fetchTodos,
         createTodo,
         updateTodo,
@@ -195,7 +277,8 @@ export const TodoProvider = ({ children }) => {
         updateTodoStatus,
         updateFilters,
         updateSortConfig,
-        changePage
+        changePage,
+        fetchAllTags
     };
 
     return (

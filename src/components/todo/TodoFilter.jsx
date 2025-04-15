@@ -3,11 +3,14 @@ import { useTodo } from '../../context/TodoContext';
 
 const TodoFilter = ({ filters, onFilterChange }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    const { loading } = useTodo();
+    // Move useTodo call to top level and extract allTags directly
+    const { loading, allTags } = useTodo();
     const [isFiltersApplied, setIsFiltersApplied] = useState(false);
     const [dateFilterType, setDateFilterType] = useState('any');
     const [customDateFrom, setCustomDateFrom] = useState('');
     const [customDateTo, setCustomDateTo] = useState('');
+    const [selectedTags, setSelectedTags] = useState([]);
+    const [availableTags, setAvailableTags] = useState([]);
 
     useEffect(() => {
         // Check if any filter is applied
@@ -21,6 +24,22 @@ const TodoFilter = ({ filters, onFilterChange }) => {
 
         setIsFiltersApplied(hasFilters);
     }, [filters]);
+
+    useEffect(() => {
+        // Use allTags from the context that's now properly retrieved at component top level
+        if (allTags) {
+            setAvailableTags(allTags);
+        }
+    }, [allTags]); // Add allTags as a dependency
+
+    useEffect(() => {
+        // Sync selectedTags with filters.tags
+        if (filters.tags) {
+            setSelectedTags(Array.isArray(filters.tags) ? filters.tags : [filters.tags]);
+        } else {
+            setSelectedTags([]);
+        }
+    }, [filters.tags]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -40,11 +59,15 @@ const TodoFilter = ({ filters, onFilterChange }) => {
             category: '',
             search: '',
             dueDateFrom: '',
-            dueDateTo: ''
+            dueDateTo: '',
+            tags: null,
+            hasSubtasks: null,
+            completedSubtasks: null
         });
         setDateFilterType('any');
         setCustomDateFrom('');
         setCustomDateTo('');
+        setSelectedTags([]);
     };
 
     const handleDateFilterChange = (e) => {
@@ -107,6 +130,20 @@ const TodoFilter = ({ filters, onFilterChange }) => {
             setCustomDateTo(value);
             onFilterChange({ dueDateTo: value });
         }
+    };
+
+    const handleTagToggle = (tag) => {
+        const newSelectedTags = selectedTags.includes(tag)
+            ? selectedTags.filter(t => t !== tag)
+            : [...selectedTags, tag];
+
+        setSelectedTags(newSelectedTags);
+        onFilterChange({ tags: newSelectedTags.length > 0 ? newSelectedTags : null });
+    };
+
+    const handleSubtaskFilterChange = (e) => {
+        const { name, value } = e.target;
+        onFilterChange({ [name]: value });
     };
 
     return (
@@ -273,6 +310,69 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                                     </div>
                                 </>
                             )}
+                        </div>
+                    </div>
+
+                    {/* Tags Filter */}
+                    <div className="mt-4">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Tags
+                        </label>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                            {availableTags.length > 0 ? (
+                                availableTags.map(tag => (
+                                    <button
+                                        key={tag}
+                                        onClick={() => handleTagToggle(tag)}
+                                        className={`px-2 py-1 rounded-full text-xs font-medium ${selectedTags.includes(tag)
+                                                ? 'bg-indigo-500 text-white'
+                                                : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                            }`}
+                                    >
+                                        {tag}
+                                    </button>
+                                ))
+                            ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No tags available</p>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Subtask Filters */}
+                    <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Subtasks
+                            </label>
+                            <select
+                                name="hasSubtasks"
+                                value={filters.hasSubtasks || ''}
+                                onChange={handleSubtaskFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                                disabled={loading}
+                            >
+                                <option value="">Any</option>
+                                <option value="true">Has subtasks</option>
+                                <option value="false">No subtasks</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Subtask Completion
+                            </label>
+                            <select
+                                name="completedSubtasks"
+                                value={filters.completedSubtasks || ''}
+                                onChange={handleSubtaskFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
+                                disabled={loading || filters.hasSubtasks === 'false'}
+                            >
+                                <option value="">Any</option>
+                                <option value="all">All completed</option>
+                                <option value="none">None completed</option>
+                                <option value="some">Some completed</option>
+                            </select>
                         </div>
                     </div>
                 </div>

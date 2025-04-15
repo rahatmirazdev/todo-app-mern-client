@@ -63,18 +63,27 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
         }
     };
 
-    // Handle sorting
-    const handleSort = (field) => {
-        onSortChange(field);
+    // Enhanced sorting handler
+    const handleSort = (field, isSecondary = false) => {
+        onSortChange(field, isSecondary);
     };
 
-    // Render sort indicator
+    // Enhanced sort indicator
     const renderSortIndicator = (field) => {
-        if (sortConfig.field !== field) return null;
+        const isPrimary = sortConfig.primaryField === field;
+        const isSecondary = sortConfig.secondaryField === field;
+
+        if (!isPrimary && !isSecondary) return null;
+
+        const direction = isPrimary
+            ? sortConfig.primaryDirection
+            : sortConfig.secondaryDirection;
 
         return (
-            <span className="ml-1">
-                {sortConfig.direction === 'asc' ? '↑' : '↓'}
+            <span className={`ml-1 ${isPrimary ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>
+                {direction === 'asc' ? '↑' : '↓'}
+                {isPrimary && <span className="text-xs ml-1">1</span>}
+                {isSecondary && <span className="text-xs ml-1">2</span>}
             </span>
         );
     };
@@ -105,6 +114,12 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-md shadow overflow-hidden">
+            {/* Sort instructions */}
+            <div className="p-3 bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
+                <span className="font-medium">Tip:</span> Click column headers to sort.
+                <span className="ml-1">Hold Ctrl/Cmd while clicking for secondary sort.</span>
+            </div>
+
             {/* Table Header */}
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -112,7 +127,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                         <tr>
                             <th
                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('title')}
+                                onClick={(e) => handleSort('title', e.ctrlKey || e.metaKey)}
                             >
                                 <div className="flex items-center">
                                     Title {renderSortIndicator('title')}
@@ -120,7 +135,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                             </th>
                             <th
                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('status')}
+                                onClick={(e) => handleSort('status', e.ctrlKey || e.metaKey)}
                             >
                                 <div className="flex items-center">
                                     Status {renderSortIndicator('status')}
@@ -128,7 +143,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                             </th>
                             <th
                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('priority')}
+                                onClick={(e) => handleSort('priority', e.ctrlKey || e.metaKey)}
                             >
                                 <div className="flex items-center">
                                     Priority {renderSortIndicator('priority')}
@@ -136,10 +151,26 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                             </th>
                             <th
                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
-                                onClick={() => handleSort('dueDate')}
+                                onClick={(e) => handleSort('dueDate', e.ctrlKey || e.metaKey)}
                             >
                                 <div className="flex items-center">
                                     Due Date {renderSortIndicator('dueDate')}
+                                </div>
+                            </th>
+                            <th
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                                onClick={(e) => handleSort('createdAt', e.ctrlKey || e.metaKey)}
+                            >
+                                <div className="flex items-center">
+                                    Created {renderSortIndicator('createdAt')}
+                                </div>
+                            </th>
+                            <th
+                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer"
+                                onClick={(e) => handleSort('completedAt', e.ctrlKey || e.metaKey)}
+                            >
+                                <div className="flex items-center">
+                                    Completed {renderSortIndicator('completedAt')}
                                 </div>
                             </th>
                             <th
