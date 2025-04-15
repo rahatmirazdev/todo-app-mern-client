@@ -23,12 +23,12 @@ const Search = () => {
     const [historyModal, setHistoryModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
     const [initialLoad, setInitialLoad] = useState(true);
     const urlUpdateTimeoutRef = useRef(null);
-    const isMountedRef = useRef(true);
+    const isMountedRef = useRef(true); // Track component mount state
     const [isSearching, setIsSearching] = useState(false);
 
     const searchQuery = searchParams.get('q') || '';
 
-    // Function to execute search
+    // Function to execute search after delay
     const handleSearch = useCallback((searchTerm) => {
         // Clear any existing timeout
         if (urlUpdateTimeoutRef.current) {
@@ -38,8 +38,8 @@ const Search = () => {
 
         setIsSearching(true);
 
-        // Batch these operations to minimize re-renders
-        setTimeout(() => {
+        // Use a delay to prevent too frequent searches while typing
+        urlUpdateTimeoutRef.current = setTimeout(() => {
             // Update URL first
             if (searchTerm) {
                 setSearchParams({ q: searchTerm });
@@ -61,7 +61,9 @@ const Search = () => {
                         setIsSearching(false);
                     }
                 });
-        }, 0);
+
+            urlUpdateTimeoutRef.current = null;
+        }, 800); // Use 800ms delay for better UX
     }, [fetchTodos, updateFilters, setSearchParams]);
 
     // Apply URL search parameter on initial load
@@ -117,14 +119,13 @@ const Search = () => {
         toast.error(message || 'An error occurred');
     };
 
-    // Filter change handler - now only used for non-search filters
+    // Filter change handler for non-search filters
     const handleFilterChange = useCallback((filterUpdate) => {
-        // For search changes, we don't want to trigger automatic searching
         if ('search' in filterUpdate && filterUpdate.search === '') {
-            // For explicit search clear, we run the search with empty term
+            // For explicit search clear, run the search with empty term
             handleSearch('');
         } else if (!('search' in filterUpdate)) {
-            // For non-search filters, update them immediately
+            // For non-search filters, update immediately
             updateFilters(filterUpdate);
         }
     }, [updateFilters, handleSearch]);
