@@ -4,10 +4,10 @@ import TodoItem from './TodoItem';
 
 const SearchResults = ({ search, onEditTodo, onViewHistory }) => {
     const { todos, loading, error } = useTodo();
-    
+
     // Get search results count
     const resultsCount = todos.length;
-    
+
     if (loading) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-md shadow p-6 mt-4">
@@ -18,7 +18,7 @@ const SearchResults = ({ search, onEditTodo, onViewHistory }) => {
             </div>
         );
     }
-    
+
     if (error) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-md shadow p-6 mt-4">
@@ -28,7 +28,7 @@ const SearchResults = ({ search, onEditTodo, onViewHistory }) => {
             </div>
         );
     }
-    
+
     if (todos.length === 0) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-md shadow p-6 mt-4 text-center">
@@ -44,7 +44,7 @@ const SearchResults = ({ search, onEditTodo, onViewHistory }) => {
             </div>
         );
     }
-    
+
     return (
         <div className="bg-white dark:bg-gray-800 rounded-md shadow mt-4">
             <div className="p-4 border-b border-gray-200 dark:border-gray-700">
@@ -78,8 +78,8 @@ const SearchResults = ({ search, onEditTodo, onViewHistory }) => {
                             <TodoItem
                                 key={todo._id}
                                 todo={todo}
-                                onStatusChange={() => {}}
-                                onDelete={() => {}}
+                                onStatusChange={() => { }}
+                                onDelete={() => { }}
                                 onEdit={onEditTodo}
                                 onViewHistory={onViewHistory}
                                 isLoading={false}

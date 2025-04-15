@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTodo } from '../../../context/TodoContext';
 import TodoFilter from '../../../components/todo/TodoFilter';
@@ -6,6 +6,7 @@ import SearchResults from '../../../components/todo/SearchResults';
 import TodoModal from '../../../components/todo/TodoModal';
 import StatusHistoryModal from '../../../components/todo/StatusHistoryModal';
 import toast from 'react-hot-toast';
+import debounce from 'lodash.debounce';
 
 const Search = () => {
     const {
@@ -16,7 +17,7 @@ const Search = () => {
         fetchTodos,
         updateFilters,
     } = useTodo();
-    
+
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
     const [editingTodo, setEditingTodo] = useState(null);
@@ -25,7 +26,20 @@ const Search = () => {
 
     const searchQuery = searchParams.get('q') || '';
 
-    // Apply URL search parameter
+    // Debounced URL updates to reduce re-renders
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedUpdateUrl = useCallback(
+        debounce((searchTerm) => {
+            if (searchTerm) {
+                setSearchParams({ q: searchTerm });
+            } else {
+                setSearchParams({});
+            }
+        }, 1000),
+        [setSearchParams]
+    );
+
+    // Apply URL search parameter on initial load
     useEffect(() => {
         if (initialLoad && searchQuery) {
             updateFilters({ search: searchQuery });
@@ -33,16 +47,12 @@ const Search = () => {
         }
     }, [initialLoad, searchQuery, updateFilters, fetchTodos]);
 
-    // Update URL when filters.search changes
+    // Update URL when filters.search changes, but debounced to avoid losing focus
     useEffect(() => {
         if (!initialLoad && filters.search !== searchQuery) {
-            if (filters.search) {
-                setSearchParams({ q: filters.search });
-            } else {
-                setSearchParams({});
-            }
+            debouncedUpdateUrl(filters.search);
         }
-    }, [filters.search, initialLoad, searchQuery, setSearchParams]);
+    }, [filters.search, initialLoad, searchQuery, debouncedUpdateUrl]);
 
     // Show any API errors as toast notifications
     useEffect(() => {
@@ -77,6 +87,15 @@ const Search = () => {
         toast.error(message || 'An error occurred');
     };
 
+    // Custom filter change handler
+    const handleFilterChange = (filterUpdate) => {
+        updateFilters(filterUpdate);
+        // If this was a search query reset (search: ''), immediately update URL
+        if (filterUpdate.search === '') {
+            setSearchParams({});
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -92,7 +111,7 @@ const Search = () => {
             {/* TodoFilter component */}
             <TodoFilter
                 filters={filters}
-                onFilterChange={updateFilters}
+                onFilterChange={handleFilterChange}
             />
 
             {/* Search Results component */}

@@ -84,14 +84,14 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoa
     // Highlight search terms in text
     const highlightText = (text, highlight) => {
         if (!highlight || !text) return text;
-        
+
         // Escape special regex characters
         const sanitizedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const parts = text.split(new RegExp(`(${sanitizedHighlight})`, 'gi'));
-        
-        return parts.map((part, index) => 
-            part.toLowerCase() === highlight.toLowerCase() 
-                ? <mark key={index} className="bg-yellow-200 dark:bg-yellow-700 px-1 rounded">{part}</mark> 
+
+        return parts.map((part, index) =>
+            part.toLowerCase() === highlight.toLowerCase()
+                ? <mark key={index} className="bg-yellow-200 dark:bg-yellow-700 px-1 rounded">{part}</mark>
                 : part
         );
     };
@@ -127,13 +127,12 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoa
                         {(showDetails || searchHighlight) && todo.tags && todo.tags.length > 0 && (
                             <div className="mt-1 flex flex-wrap gap-1">
                                 {todo.tags.map((tag, idx) => (
-                                    <span 
-                                        key={idx} 
-                                        className={`px-2 py-0.5 rounded-full text-xs ${
-                                            searchHighlight && tag.toLowerCase().includes(searchHighlight.toLowerCase())
+                                    <span
+                                        key={idx}
+                                        className={`px-2 py-0.5 rounded-full text-xs ${searchHighlight && tag.toLowerCase().includes(searchHighlight.toLowerCase())
                                                 ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
                                                 : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                                        }`}
+                                            }`}
                                     >
                                         {tag}
                                     </span>

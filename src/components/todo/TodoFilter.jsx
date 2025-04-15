@@ -1,10 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useTodo } from '../../context/TodoContext';
 import debounce from 'lodash.debounce';
 
 const TodoFilter = ({ filters, onFilterChange }) => {
     const [isExpanded, setIsExpanded] = useState(false);
-    // Move useTodo call to top level and extract allTags directly
     const { loading, allTags } = useTodo();
     const [isFiltersApplied, setIsFiltersApplied] = useState(false);
     const [dateFilterType, setDateFilterType] = useState('any');
@@ -13,13 +12,14 @@ const TodoFilter = ({ filters, onFilterChange }) => {
     const [selectedTags, setSelectedTags] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
     const [searchInput, setSearchInput] = useState(filters.search || '');
+    const searchInputRef = useRef(null);
 
-    // Create debounced search function
+    // Create debounced search function with longer delay (800ms instead of 500ms)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     const debouncedSearch = useCallback(
         debounce((searchTerm) => {
             onFilterChange({ search: searchTerm });
-        }, 500),
+        }, 800),
         [onFilterChange]
     );
 
@@ -35,7 +35,23 @@ const TodoFilter = ({ filters, onFilterChange }) => {
         if (filters.search !== searchInput && filters.search !== undefined) {
             setSearchInput(filters.search);
         }
-    }, [filters.search]);
+    }, [filters.search, searchInput]);
+
+    // Handle focus preservation after URL updates
+    useEffect(() => {
+        // Restore focus if we still have a search term
+        if (searchInput && searchInputRef.current && document.activeElement !== searchInputRef.current) {
+            // Use timeout to let the render cycle complete before restoring focus
+            const timeoutId = setTimeout(() => {
+                searchInputRef.current.focus();
+                // Position cursor at the end of input
+                const length = searchInputRef.current.value.length;
+                searchInputRef.current.setSelectionRange(length, length);
+            }, 50);
+
+            return () => clearTimeout(timeoutId);
+        }
+    }, [filters, searchInput]);
 
     useEffect(() => {
         // Check if any filter is applied
@@ -75,6 +91,14 @@ const TodoFilter = ({ filters, onFilterChange }) => {
         const value = e.target.value;
         setSearchInput(value);
         debouncedSearch(value);
+    };
+
+    const handleSearchKeyDown = (e) => {
+        // If user presses Escape, clear the search
+        if (e.key === 'Escape') {
+            setSearchInput('');
+            onFilterChange({ search: '' });
+        }
     };
 
     const clearFilters = () => {
@@ -177,10 +201,12 @@ const TodoFilter = ({ filters, onFilterChange }) => {
             {/* Search input */}
             <div className="relative">
                 <input
+                    ref={searchInputRef}
                     type="text"
                     placeholder="Search todos..."
                     value={searchInput}
                     onChange={handleSearchChange}
+                    onKeyDown={handleSearchKeyDown}
                     className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                     disabled={loading}
                 />
@@ -190,6 +216,8 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                         onClick={() => {
                             setSearchInput('');
                             onFilterChange({ search: '' });
+                            // Focus the input after clearing
+                            searchInputRef.current?.focus();
                         }}
                         className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         disabled={loading}
@@ -366,8 +394,8 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                                         key={tag}
                                         onClick={() => handleTagToggle(tag)}
                                         className={`px-2 py-1 rounded-full text-xs font-medium ${selectedTags.includes(tag)
-                                                ? 'bg-indigo-500 text-white'
-                                                : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                            ? 'bg-indigo-500 text-white'
+                                            : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                             }`}
                                     >
                                         {tag}
