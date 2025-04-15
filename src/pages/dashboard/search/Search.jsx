@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useTodo } from '../../../context/TodoContext';
 import TodoFilter from '../../../components/todo/TodoFilter';
@@ -6,7 +6,6 @@ import SearchResults from '../../../components/todo/SearchResults';
 import TodoModal from '../../../components/todo/TodoModal';
 import StatusHistoryModal from '../../../components/todo/StatusHistoryModal';
 import toast from 'react-hot-toast';
-import debounce from 'lodash.debounce';
 
 const Search = () => {
     const {
@@ -23,36 +22,65 @@ const Search = () => {
     const [editingTodo, setEditingTodo] = useState(null);
     const [historyModal, setHistoryModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
     const [initialLoad, setInitialLoad] = useState(true);
+    const urlUpdateTimeoutRef = useRef(null);
+    const isMountedRef = useRef(true); // Track component mount state
+    const [isSearching, setIsSearching] = useState(false);
 
     const searchQuery = searchParams.get('q') || '';
 
-    // Debounced URL updates to reduce re-renders
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    const debouncedUpdateUrl = useCallback(
-        debounce((searchTerm) => {
-            if (searchTerm) {
-                setSearchParams({ q: searchTerm });
-            } else {
-                setSearchParams({});
-            }
-        }, 1000),
-        [setSearchParams]
-    );
+    // Update URL and trigger search after delay
+    const handleSearch = useCallback((searchTerm) => {
+        // Clear any existing timeout
+        if (urlUpdateTimeoutRef.current) {
+            clearTimeout(urlUpdateTimeoutRef.current);
+        }
+
+        if (searchTerm) {
+            setIsSearching(true);
+
+            // Delay both URL update and actual search
+            urlUpdateTimeoutRef.current = setTimeout(() => {
+                if (isMountedRef.current) {
+                    // Update URL
+                    setSearchParams({ q: searchTerm });
+
+                    // Trigger actual search
+                    updateFilters({ search: searchTerm });
+                    fetchTodos().then(() => {
+                        if (isMountedRef.current) {
+                            setIsSearching(false);
+                        }
+                    });
+                }
+                urlUpdateTimeoutRef.current = null;
+            }, 800); // Shorter delay for better UX
+        } else {
+            // Clear search immediately
+            setSearchParams({});
+            updateFilters({ search: '' });
+            fetchTodos();
+        }
+    }, [setSearchParams, updateFilters, fetchTodos]);
 
     // Apply URL search parameter on initial load
     useEffect(() => {
         if (initialLoad && searchQuery) {
             updateFilters({ search: searchQuery });
             fetchTodos().then(() => setInitialLoad(false));
+        } else if (initialLoad) {
+            setInitialLoad(false);
         }
     }, [initialLoad, searchQuery, updateFilters, fetchTodos]);
 
-    // Update URL when filters.search changes, but debounced to avoid losing focus
+    // Clean up on unmount
     useEffect(() => {
-        if (!initialLoad && filters.search !== searchQuery) {
-            debouncedUpdateUrl(filters.search);
-        }
-    }, [filters.search, initialLoad, searchQuery, debouncedUpdateUrl]);
+        return () => {
+            isMountedRef.current = false;
+            if (urlUpdateTimeoutRef.current) {
+                clearTimeout(urlUpdateTimeoutRef.current);
+            }
+        };
+    }, []);
 
     // Show any API errors as toast notifications
     useEffect(() => {
@@ -88,13 +116,20 @@ const Search = () => {
     };
 
     // Custom filter change handler
-    const handleFilterChange = (filterUpdate) => {
-        updateFilters(filterUpdate);
-        // If this was a search query reset (search: ''), immediately update URL
-        if (filterUpdate.search === '') {
-            setSearchParams({});
+    const handleFilterChange = useCallback((filterUpdate) => {
+        if ('search' in filterUpdate) {
+            // For search changes, we delay the actual update
+            if (filterUpdate.search === '') {
+                // Clear search immediately
+                setSearchParams({});
+                updateFilters({ search: '' });
+            }
+            // Otherwise, wait for explicit search trigger from TodoFilter
+        } else {
+            // For non-search filters, update immediately
+            updateFilters(filterUpdate);
         }
-    };
+    }, [updateFilters, setSearchParams]);
 
     return (
         <div className="space-y-6">
@@ -108,10 +143,12 @@ const Search = () => {
                 </button>
             </div>
 
-            {/* TodoFilter component */}
+            {/* TodoFilter component with search trigger */}
             <TodoFilter
                 filters={filters}
                 onFilterChange={handleFilterChange}
+                onSearch={handleSearch}
+                isSearching={isSearching}
             />
 
             {/* Search Results component */}
