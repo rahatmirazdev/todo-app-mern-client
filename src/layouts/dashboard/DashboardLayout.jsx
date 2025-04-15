@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../../components/shared/ThemeToggle';
@@ -10,7 +10,11 @@ const DashboardLayout = () => {
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const { user } = useAuth();
-    const { theme } = useTheme(); // Add this line to get the theme
+    const { theme } = useTheme();
+    const location = useLocation();
+    
+    // Check if current route is analytics page
+    const isAnalyticsPage = location.pathname === '/dashboard/analytics';
 
     // Check if mobile on first render
     useLayoutEffect(() => {
@@ -38,7 +42,7 @@ const DashboardLayout = () => {
     };
 
     return (
-        <div className="h-screen overflow-hidden bg-gray-50 dark:bg-gray-900">
+        <div className={`${isAnalyticsPage ? '' : 'h-screen overflow-hidden'} bg-gray-50 dark:bg-gray-900`}>
             {/* Add Toaster component for notifications */}
             <Toaster
                 position="top-right"
