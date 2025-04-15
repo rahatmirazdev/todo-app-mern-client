@@ -1,6 +1,15 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axiosPrivate from '../services/api/axiosPrivate';
 import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
+
+// Import useNotification conditionally to prevent circular dependencies
+let useNotification;
+try {
+    useNotification = require('./NotificationContext').useNotification;
+} catch (error) {
+    useNotification = () => null;
+}
 
 const TodoContext = createContext();
 
@@ -33,6 +42,10 @@ export const TodoProvider = ({ children }) => {
     const [allTodos, setAllTodos] = useState([]); // For dependency selection
 
     const { user } = useAuth();
+
+    // Safely access the notification context if available
+    const notificationContext = useNotification ? useNotification() : null;
+    const showTaskUpdate = notificationContext?.showTaskUpdate || (() => { });
 
     // Fetch todos with filters, sorting, and pagination
     const fetchTodos = useCallback(async () => {
@@ -187,6 +200,7 @@ export const TodoProvider = ({ children }) => {
 
                 // Show notification about the new task
                 toast.success('Recurring task completed. New task created!');
+                showTaskUpdate('Recurring task completed. New task created!', id);
 
                 return response.data.updatedTodo;
             } else {
@@ -194,6 +208,13 @@ export const TodoProvider = ({ children }) => {
                 setTodos(todos.map(todo =>
                     todo._id === id ? response.data : todo
                 ));
+
+                // Show notification about status change
+                if (status === 'completed') {
+                    showTaskUpdate('Task marked as completed', id);
+                } else if (status === 'in_progress') {
+                    showTaskUpdate('Task moved to in progress', id);
+                }
 
                 return response.data;
             }
@@ -204,7 +225,7 @@ export const TodoProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
-    }, [todos, axiosPrivate]);
+    }, [todos, axiosPrivate, showTaskUpdate]);
 
     // New function to get recurring series
     const getRecurringSeries = useCallback(async (recurringId) => {

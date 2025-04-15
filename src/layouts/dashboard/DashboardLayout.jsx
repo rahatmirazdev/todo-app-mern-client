@@ -1,20 +1,58 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { Outlet, useLocation, Link } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from '../../components/shared/ThemeToggle';
 import { Toaster } from 'react-hot-toast';
 import { useTheme } from '../../context/ThemeContext';
 
+// Import the context directly at the top level - no dynamic imports
+// If the import fails, default to null
+let NotificationContext = null;
+try {
+    NotificationContext = require('../../context/NotificationContext');
+} catch (error) {
+    console.warn('NotificationContext not available:', error);
+}
+
 const DashboardLayout = () => {
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
+    const [showNotifications, setShowNotifications] = useState(false);
     const { user } = useAuth();
     const { theme } = useTheme();
     const location = useLocation();
+    const notificationRef = useRef(null);
+
+    // Safely access notification context - always call the hook if available
+    const notificationContext = NotificationContext ? NotificationContext.useNotification() : null;
+
+    // Provide fallback functions if context is not available
+    const notifications = notificationContext?.notifications || [];
+    const markAsRead = notificationContext?.markAsRead || (() => { });
+    const clearAll = notificationContext?.clearAll || (() => { });
+
+    // Count unread notifications
+    const unreadCount = notifications.filter(n => !n.read).length || 0;
 
     // Check if current route is analytics page
     const isAnalyticsPage = location.pathname === '/dashboard/analytics';
+
+    // Close notifications when clicking outside
+    useEffect(() => {
+        if (!notificationRef.current) return;
+
+        const handleClickOutside = (event) => {
+            if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+                setShowNotifications(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Check if mobile on first render
     useLayoutEffect(() => {
@@ -101,13 +139,88 @@ const DashboardLayout = () => {
                         {/* Theme Toggle */}
                         <ThemeToggle />
 
-                        {/* Notifications */}
-                        <button className="p-1.5 rounded-md text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 relative">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                            </svg>
-                            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
-                        </button>
+                        {/* Notifications - Only show if notification context is available */}
+                        {notificationContext && (
+                            <div className="relative" ref={notificationRef}>
+                                <button
+                                    className="p-1.5 rounded-md text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400 relative"
+                                    onClick={() => setShowNotifications(!showNotifications)}
+                                    aria-label="Notifications"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    {unreadCount > 0 && (
+                                        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full"></span>
+                                    )}
+                                </button>
+
+                                {/* Notification Dropdown */}
+                                {showNotifications && (
+                                    <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-700 overflow-hidden">
+                                        <div className="p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                                            <h3 className="font-medium text-gray-800 dark:text-gray-200">Notifications</h3>
+                                            {notifications.length > 0 && (
+                                                <button
+                                                    onClick={clearAll}
+                                                    className="text-xs text-gray-500 hover:text-indigo-600 dark:text-gray-400 dark:hover:text-indigo-400"
+                                                >
+                                                    Clear all
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="max-h-96 overflow-y-auto">
+                                            {notifications.length === 0 ? (
+                                                <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                                                    No notifications
+                                                </div>
+                                            ) : (
+                                                <ul>
+                                                    {notifications.map(notification => (
+                                                        <li
+                                                            key={notification.id}
+                                                            className={`border-b border-gray-100 dark:border-gray-700 last:border-b-0 ${!notification.read ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+                                                        >
+                                                            <Link
+                                                                to={notification.link || '#'}
+                                                                className="block p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                                                                onClick={() => {
+                                                                    markAsRead(notification.id);
+                                                                    setShowNotifications(false);
+                                                                }}
+                                                            >
+                                                                <div className="flex">
+                                                                    <div className="flex-shrink-0">
+                                                                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-500 dark:text-indigo-400">
+                                                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                                                                                <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                                                                                <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="ml-3 flex-1">
+                                                                        <p className={`text-sm ${!notification.read ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
+                                                                            {notification.title}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                                                            {notification.message}
+                                                                        </p>
+                                                                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                                            {new Date(notification.createdAt).toLocaleString()}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                            </Link>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         {/* Profile Button */}
                         <div className="relative">
