@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import RecurringSeriesModal from './RecurringSeriesModal';
 
 const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange, onViewHistory }) => {
-    const { updateTodoStatus, deleteTodo, toggleSubtask } = useTodo();
+    const { updateTodoStatus, deleteTodo, toggleSubtask, allTodos, canCompleteTodo } = useTodo();
     const [actionLoading, setActionLoading] = useState(null);
     const [statusModal, setStatusModal] = useState({ visible: false, todoId: null, currentStatus: null });
     const [seriesModal, setSeriesModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
@@ -158,6 +158,9 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                     onViewHistory={onViewHistory}
                     onViewSeries={handleViewSeries}
                     actionLoading={actionLoading}
+                    allTodos={allTodos}
+                    canCompleteTodo={canCompleteTodo}
+                    onToggleSubtask={handleToggleSubtask}
                 />
             </div>
 

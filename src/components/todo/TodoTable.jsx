@@ -11,7 +11,10 @@ const TodoTable = memo(({
     onEdit,
     onViewHistory,
     onViewSeries,
-    actionLoading
+    actionLoading,
+    allTodos,
+    canCompleteTodo,
+    onToggleSubtask
 }) => {
     return (
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -83,6 +86,9 @@ const TodoTable = memo(({
                         onViewHistory={onViewHistory}
                         onViewSeries={onViewSeries}
                         isLoading={actionLoading === todo._id}
+                        allTodos={allTodos || []}
+                        canCompleteTodo={canCompleteTodo || (() => true)}
+                        onToggleSubtask={onToggleSubtask}
                     />
                 ))}
             </tbody>

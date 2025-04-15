@@ -1,6 +1,6 @@
 import React from 'react';
 
-const StatusDropdown = ({ status, onStatusChange, todoId, isLoading }) => {
+const StatusDropdown = ({ status, onStatusChange, todoId, isLoading, disableComplete }) => {
     // Get status class
     const getStatusClass = (status) => {
         switch (status) {
@@ -24,7 +24,7 @@ const StatusDropdown = ({ status, onStatusChange, todoId, isLoading }) => {
         >
             <option value="todo">To Do</option>
             <option value="in_progress">In Progress</option>
-            <option value="completed">Completed</option>
+            <option value="completed" disabled={disableComplete}>Completed</option>
         </select>
     );
 };

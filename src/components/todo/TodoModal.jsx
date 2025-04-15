@@ -6,10 +6,11 @@ import DateCategory from './modal/DateCategory';
 import TagManager from './modal/TagManager';
 import RecurringOptions from './modal/RecurringOptions';
 import SubtaskManager from './modal/SubtaskManager';
+import DependencySelector from './modal/DependencySelector';
 import ModalActions from './modal/ModalActions';
 
 const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, onError }) => {
-    const { createTodo, updateTodo } = useTodo();
+    const { createTodo, updateTodo, allTodos, fetchAllTodos } = useTodo();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [formData, setFormData] = useState({
@@ -23,10 +24,16 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
         isRecurring: false,
         recurringPattern: 'daily',
         recurringEndDate: '',
-        subtasks: []
+        subtasks: [],
+        dependencies: []
     });
     const [newTag, setNewTag] = useState('');
     const [newSubtask, setNewSubtask] = useState('');
+
+    // Ensure we have the latest list of todos for dependency selection
+    useEffect(() => {
+        fetchAllTodos();
+    }, [fetchAllTodos]);
 
     useEffect(() => {
         if (mode === 'edit' && todo) {
@@ -45,7 +52,8 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                 isRecurring: todo.isRecurring || false,
                 recurringPattern: todo.recurringPattern || 'daily',
                 recurringEndDate: formattedRecurringEndDate,
-                subtasks: todo.subtasks || []
+                subtasks: todo.subtasks || [],
+                dependencies: todo.dependencies || []
             });
         }
     }, [mode, todo]);
@@ -170,6 +178,12 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                                         setNewTag={setNewTag}
                                         handleAddTag={handleAddTag}
                                         handleRemoveTag={handleRemoveTag}
+                                    />
+                                    <DependencySelector
+                                        allTodos={allTodos}
+                                        currentTodoId={todo?._id || ''}
+                                        selectedDependencies={formData.dependencies}
+                                        onDependenciesChange={(deps) => setFormData({ ...formData, dependencies: deps })}
                                     />
                                     <RecurringOptions formData={formData} handleChange={handleChange} />
                                     <SubtaskManager

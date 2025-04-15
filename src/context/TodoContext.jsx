@@ -30,6 +30,7 @@ export const TodoProvider = ({ children }) => {
         secondaryField: null,
         secondaryDirection: 'asc'
     });
+    const [allTodos, setAllTodos] = useState([]); // For dependency selection
 
     const { user } = useAuth();
 
@@ -336,26 +337,63 @@ export const TodoProvider = ({ children }) => {
         }
     }, [user, fetchAllTags]);
 
+    // Fetch all todos (for dependency selection) - with improved error handling
+    const fetchAllTodos = useCallback(async () => {
+        if (!user) return;
+
+        try {
+            const response = await axiosPrivate.get('/todos/all');
+            setAllTodos(response.data);
+        } catch (err) {
+            console.error('Error fetching all todos:', err);
+            // Don't set error in the context for this operation to avoid UI disruption
+            // Just use an empty array as fallback
+            setAllTodos([]);
+        }
+    }, [user, axiosPrivate]);
+
+    // Check if a todo can be completed based on its dependencies
+    const canCompleteTodo = useCallback((todoId) => {
+        const todo = todos.find(t => t._id === todoId);
+        if (!todo || !todo.dependencies || todo.dependencies.length === 0) {
+            return true;
+        }
+
+        // Check if all dependencies are completed
+        return todo.dependencies.every(depId => {
+            const dependency = allTodos.find(t => t._id === depId);
+            return dependency && dependency.status === 'completed';
+        });
+    }, [todos, allTodos]);
+
+    // Fetch all todos when context is mounted
+    useEffect(() => {
+        if (user) {
+            fetchAllTodos();
+        }
+    }, [user, fetchAllTodos]);
+
     // Context value
     const value = {
         todos,
         loading,
         error,
+        allTodos,
         filters,
         pagination,
         sortConfig,
-        allTags,
         fetchTodos,
+        fetchAllTodos,
         createTodo,
         updateTodo,
         deleteTodo,
         updateTodoStatus,
+        getRecurringSeries,
+        toggleSubtask,
         updateFilters,
         updateSortConfig,
         changePage,
-        fetchAllTags,
-        getRecurringSeries,
-        toggleSubtask
+        canCompleteTodo
     };
 
     return (

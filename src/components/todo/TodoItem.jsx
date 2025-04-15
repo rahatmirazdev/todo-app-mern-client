@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import ExpandButton from './common/ExpandButton';
 import StatusDropdown from './status/StatusDropdown';
 import PriorityBadge from './priority/PriorityBadge';
@@ -7,6 +8,8 @@ import TodoActions from './actions/TodoActions';
 import TodoBadges from './badges/TodoBadges';
 import TodoTags from './tags/TodoTags';
 import SubtaskList from './subtasks/SubtaskList';
+import DependencyBadge from './dependencies/DependencyBadge';
+import DependencyList from './dependencies/DependencyList';
 import { highlightText } from '../../utils/TextHighlighter';
 
 const TodoItem = ({
@@ -18,7 +21,9 @@ const TodoItem = ({
     onViewSeries,
     isLoading,
     searchHighlight,
-    onToggleSubtask
+    onToggleSubtask,
+    allTodos,
+    canCompleteTodo
 }) => {
     const [showDetails, setShowDetails] = useState(false);
 
@@ -35,6 +40,16 @@ const TodoItem = ({
         };
     };
 
+    // Handle status change with dependency check
+    const handleStatusChange = (id, newStatus) => {
+        // Skip dependency check if allTodos isn't available yet
+        if (newStatus === 'completed' && allTodos && allTodos.length > 0 && !canCompleteTodo(id)) {
+            toast.error('Cannot complete this task. Please complete all dependencies first.');
+            return;
+        }
+        onStatusChange(id, newStatus);
+    };
+
     const subtaskProgress = getSubtaskProgress();
 
     return (
@@ -46,9 +61,13 @@ const TodoItem = ({
                         onClick={() => setShowDetails(!showDetails)}
                     />
                     <div>
+                        {/* Render badges only if allTodos is available */}
                         <div className="font-medium text-gray-900 dark:text-white flex items-center">
                             {searchHighlight ? highlightText(todo.title, searchHighlight) : todo.title}
                             <TodoBadges todo={todo} subtaskProgress={subtaskProgress} />
+                            {allTodos && allTodos.length > 0 && (
+                                <DependencyBadge todo={todo} allTodos={allTodos} />
+                            )}
                         </div>
                         {showDetails && todo.description && (
                             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
@@ -59,6 +78,11 @@ const TodoItem = ({
                         {/* Show tags with highlight if search is active */}
                         {(showDetails || searchHighlight) && todo.tags && todo.tags.length > 0 && (
                             <TodoTags tags={todo.tags} searchHighlight={searchHighlight} />
+                        )}
+
+                        {/* Show dependencies in details */}
+                        {showDetails && allTodos && allTodos.length > 0 && (
+                            <DependencyList todo={todo} allTodos={allTodos} />
                         )}
 
                         {/* Subtasks section */}
@@ -78,9 +102,10 @@ const TodoItem = ({
             <td className="px-6 py-4 whitespace-nowrap">
                 <StatusDropdown
                     status={todo.status}
-                    onStatusChange={onStatusChange}
+                    onStatusChange={handleStatusChange}
                     todoId={todo._id}
                     isLoading={isLoading}
+                    disableComplete={!canCompleteTodo(todo._id)}
                 />
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
