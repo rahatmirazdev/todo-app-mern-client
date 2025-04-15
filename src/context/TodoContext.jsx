@@ -222,6 +222,48 @@ export const TodoProvider = ({ children }) => {
         }
     }, [axiosPrivate]);
 
+    // Toggle subtask completion
+    const toggleSubtask = useCallback(async (todoId, subtaskIndex) => {
+        setLoading(true);
+        setError(null);
+
+        try {
+            const todoToUpdate = todos.find(todo => todo._id === todoId);
+            if (!todoToUpdate) {
+                throw new Error('Todo not found');
+            }
+
+            // Create a deep copy of the todo's subtasks
+            const updatedSubtasks = JSON.parse(JSON.stringify(todoToUpdate.subtasks));
+
+            // Toggle the completion status
+            updatedSubtasks[subtaskIndex].completed = !updatedSubtasks[subtaskIndex].completed;
+
+            // Set the completedAt timestamp
+            updatedSubtasks[subtaskIndex].completedAt = updatedSubtasks[subtaskIndex].completed
+                ? new Date().toISOString()
+                : null;
+
+            // Send update to the server
+            const response = await axiosPrivate.put(`/todos/${todoId}`, {
+                subtasks: updatedSubtasks
+            });
+
+            // Update todo in the local state
+            setTodos(todos.map(todo =>
+                todo._id === todoId ? response.data : todo
+            ));
+
+            return response.data;
+        } catch (err) {
+            setError(err.message || 'Failed to toggle subtask');
+            console.error('Error toggling subtask:', err);
+            throw err;
+        } finally {
+            setLoading(false);
+        }
+    }, [todos, axiosPrivate]);
+
     // Update filters
     const updateFilters = useCallback((newFilters) => {
         setFilters(prev => ({ ...prev, ...newFilters }));
@@ -312,7 +354,8 @@ export const TodoProvider = ({ children }) => {
         updateSortConfig,
         changePage,
         fetchAllTags,
-        getRecurringSeries
+        getRecurringSeries,
+        toggleSubtask
     };
 
     return (

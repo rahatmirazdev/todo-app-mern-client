@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import RecurringSeriesModal from './RecurringSeriesModal';
 
 const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange, onViewHistory }) => {
-    const { updateTodoStatus, deleteTodo } = useTodo();
+    const { updateTodoStatus, deleteTodo, toggleSubtask } = useTodo();
     const [actionLoading, setActionLoading] = useState(null);
     const [statusModal, setStatusModal] = useState({ visible: false, todoId: null, currentStatus: null });
     const [seriesModal, setSeriesModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
@@ -97,6 +97,20 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
             todoId,
             todoTitle
         });
+    };
+
+    // Handle toggling a subtask
+    const handleToggleSubtask = async (todoId, subtaskIndex) => {
+        setActionLoading(todoId);
+        try {
+            await toggleSubtask(todoId, subtaskIndex);
+            // No toast needed for subtask toggle to avoid too many notifications
+        } catch (error) {
+            toast.error('Failed to update subtask');
+            console.error('Failed to update subtask:', error);
+        } finally {
+            setActionLoading(null);
+        }
     };
 
     if (loading) {

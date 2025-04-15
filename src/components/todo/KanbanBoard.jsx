@@ -35,6 +35,28 @@ const TaskCard = ({ todo, onEdit }) => {
         }
     };
 
+    // Calculate subtask completion percentage
+    const getSubtaskProgress = () => {
+        if (!todo.subtasks || todo.subtasks.length === 0) return null;
+
+        const completedCount = todo.subtasks.filter(subtask => subtask.completed).length;
+        const totalCount = todo.subtasks.length;
+        return {
+            percent: Math.round((completedCount / totalCount) * 100),
+            completed: completedCount,
+            total: totalCount
+        };
+    };
+
+    // Get progress bar color
+    const getProgressColor = (percent) => {
+        if (percent < 30) return 'bg-red-500';
+        if (percent < 70) return 'bg-yellow-500';
+        return 'bg-green-500';
+    };
+
+    const subtaskProgress = getSubtaskProgress();
+
     return (
         <div
             ref={drag}
@@ -42,6 +64,22 @@ const TaskCard = ({ todo, onEdit }) => {
             onClick={() => onEdit(todo)}
         >
             <h3 className="font-medium text-gray-900 dark:text-white text-sm">{todo.title}</h3>
+
+            {/* Subtask progress display */}
+            {subtaskProgress && (
+                <div className="mt-1.5 mb-1">
+                    <div className="flex justify-between text-xs mb-1">
+                        <span className="text-gray-600 dark:text-gray-400">Subtasks: {subtaskProgress.completed}/{subtaskProgress.total}</span>
+                        <span className="text-gray-600 dark:text-gray-400">{subtaskProgress.percent}%</span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200 dark:bg-gray-600 rounded-full">
+                        <div
+                            className={`h-1.5 rounded-full ${getProgressColor(subtaskProgress.percent)}`}
+                            style={{ width: `${subtaskProgress.percent}%` }}
+                        ></div>
+                    </div>
+                </div>
+            )}
 
             {todo.dueDate && (
                 <div className={`mt-2 text-xs flex items-center ${isOverdue(todo.dueDate) ? 'text-red-500' : 'text-gray-500 dark:text-gray-400'}`}>
@@ -54,8 +92,8 @@ const TaskCard = ({ todo, onEdit }) => {
 
             <div className="mt-2 flex justify-between items-center">
                 <span className={`text-xs px-2 py-1 rounded-full ${todo.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' :
-                        todo.priority === 'medium' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
-                            'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
+                    todo.priority === 'medium' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400' :
+                        'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                     }`}>
                     {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
                 </span>
