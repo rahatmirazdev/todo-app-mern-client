@@ -179,21 +179,21 @@ export const TodoProvider = ({ children }) => {
                 // Add the new recurring task to the list
                 setTodos(prevTodos => [
                     response.data.newRecurringTask,
-                    ...prevTodos.map(todo => 
+                    ...prevTodos.map(todo =>
                         todo._id === id ? response.data.updatedTodo : todo
                     )
                 ]);
-                
+
                 // Show notification about the new task
                 toast.success('Recurring task completed. New task created!');
-                
+
                 return response.data.updatedTodo;
             } else {
                 // Update todo in the list (no recurring)
                 setTodos(todos.map(todo =>
                     todo._id === id ? response.data : todo
                 ));
-                
+
                 return response.data;
             }
         } catch (err) {
@@ -209,7 +209,7 @@ export const TodoProvider = ({ children }) => {
     const getRecurringSeries = useCallback(async (recurringId) => {
         setLoading(true);
         setError(null);
-        
+
         try {
             const response = await axiosPrivate.get(`/todos/series/${recurringId}`);
             return response.data;

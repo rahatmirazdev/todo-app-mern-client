@@ -117,7 +117,7 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, onVie
                     <div>
                         <div className="font-medium text-gray-900 dark:text-white flex items-center">
                             {searchHighlight ? highlightText(todo.title, searchHighlight) : todo.title}
-                            
+
                             {/* Recurring indicator */}
                             {todo.isRecurring && (
                                 <span className="ml-2 text-xs px-1.5 py-0.5 bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 rounded-full flex items-center">
@@ -140,8 +140,8 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, onVie
                                     <span
                                         key={idx}
                                         className={`px-2 py-0.5 rounded-full text-xs ${searchHighlight && tag.toLowerCase().includes(searchHighlight.toLowerCase())
-                                                ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
-                                                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                            ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
+                                            : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
                                             }`}
                                     >
                                         {tag}
@@ -212,7 +212,7 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, onVie
                         >
                             History
                         </button>
-                        
+
                         {/* Add recurring series button */}
                         {todo.isRecurring && (
                             <button
