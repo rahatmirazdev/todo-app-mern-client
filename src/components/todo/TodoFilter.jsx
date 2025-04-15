@@ -11,14 +11,14 @@ const TodoFilter = ({ filters, onFilterChange }) => {
 
     useEffect(() => {
         // Check if any filter is applied
-        const hasFilters = 
-            filters.status !== '' || 
-            filters.priority !== '' || 
-            filters.category !== '' || 
+        const hasFilters =
+            filters.status !== '' ||
+            filters.priority !== '' ||
+            filters.category !== '' ||
             filters.search !== '' ||
             filters.dueDateFrom !== '' ||
             filters.dueDateTo !== '';
-        
+
         setIsFiltersApplied(hasFilters);
     }, [filters]);
 
@@ -50,14 +50,14 @@ const TodoFilter = ({ filters, onFilterChange }) => {
     const handleDateFilterChange = (e) => {
         const value = e.target.value;
         setDateFilterType(value);
-        
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        
+
         let fromDate = '';
         let toDate = '';
-        
-        switch(value) {
+
+        switch (value) {
             case 'today':
                 fromDate = today.toISOString().split('T')[0];
                 toDate = today.toISOString().split('T')[0];
@@ -91,7 +91,7 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                 // Any - clear both
                 break;
         }
-        
+
         onFilterChange({
             dueDateFrom: fromDate,
             dueDateTo: toDate

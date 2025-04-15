@@ -7,17 +7,17 @@ import TodoModal from '../../../components/todo/TodoModal';
 import toast from 'react-hot-toast';
 
 const Todo = () => {
-    const { 
-        todos, 
-        loading, 
-        error, 
-        filters, 
-        pagination, 
-        sortConfig, 
+    const {
+        todos,
+        loading,
+        error,
+        filters,
+        pagination,
+        sortConfig,
         fetchTodos,
-        updateFilters, 
-        updateSortConfig, 
-        changePage 
+        updateFilters,
+        updateSortConfig,
+        changePage
     } = useTodo();
     const [searchParams] = useSearchParams();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -33,14 +33,14 @@ const Todo = () => {
                 category: searchParams.get('category') || '',
                 search: searchParams.get('search') || ''
             };
-            
+
             // Handle date filter from URL
             const dateFilter = searchParams.get('dateFilter');
             if (dateFilter) {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                
-                switch(dateFilter) {
+
+                switch (dateFilter) {
                     case 'today':
                         urlFilters.dueDateFrom = today.toISOString().split('T')[0];
                         urlFilters.dueDateTo = today.toISOString().split('T')[0];
@@ -58,12 +58,12 @@ const Todo = () => {
                         break;
                 }
             }
-            
+
             // Only update filters if there's at least one filter in the URL
             if (Object.values(urlFilters).some(value => value !== '')) {
                 updateFilters(urlFilters);
             }
-            
+
             fetchTodos().then(() => setInitialLoad(false));
         }
     }, [fetchTodos, initialLoad, searchParams, updateFilters]);

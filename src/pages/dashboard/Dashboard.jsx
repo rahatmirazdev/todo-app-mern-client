@@ -58,7 +58,7 @@ const Dashboard = () => {
             <span className="text-purple-600 dark:text-purple-400 mt-2 inline-block cursor-pointer">Coming Soon</span>
           </div>
         </div>
-        
+
         {/* Todo Priority and Due Date Summary Widget */}
         <div className="mt-8">
           <TodoSummaryWidget />

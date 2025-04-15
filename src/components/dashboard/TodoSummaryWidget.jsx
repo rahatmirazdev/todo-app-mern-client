@@ -41,14 +41,14 @@ const TodoSummaryWidget = () => {
     return (
         <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-md">
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Todo Summary</h3>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">By Priority</h4>
                     <div className="space-y-2">
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?priority=high" 
+                            <Link
+                                to="/dashboard/todos?priority=high"
                                 className="text-sm text-red-600 dark:text-red-400 hover:underline"
                             >
                                 High Priority
@@ -56,8 +56,8 @@ const TodoSummaryWidget = () => {
                             <span className="text-sm font-medium">{summary.priority.high}</span>
                         </div>
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?priority=medium" 
+                            <Link
+                                to="/dashboard/todos?priority=medium"
                                 className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
                             >
                                 Medium Priority
@@ -65,8 +65,8 @@ const TodoSummaryWidget = () => {
                             <span className="text-sm font-medium">{summary.priority.medium}</span>
                         </div>
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?priority=low" 
+                            <Link
+                                to="/dashboard/todos?priority=low"
                                 className="text-sm text-green-600 dark:text-green-400 hover:underline"
                             >
                                 Low Priority
@@ -75,13 +75,13 @@ const TodoSummaryWidget = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div>
                     <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">By Due Date</h4>
                     <div className="space-y-2">
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?dateFilter=overdue" 
+                            <Link
+                                to="/dashboard/todos?dateFilter=overdue"
                                 className="text-sm text-red-600 dark:text-red-400 hover:underline"
                             >
                                 Overdue
@@ -89,8 +89,8 @@ const TodoSummaryWidget = () => {
                             <span className="text-sm font-medium">{summary.dueDate.overdue}</span>
                         </div>
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?dateFilter=today" 
+                            <Link
+                                to="/dashboard/todos?dateFilter=today"
                                 className="text-sm text-orange-600 dark:text-orange-400 hover:underline"
                             >
                                 Due Today
@@ -98,8 +98,8 @@ const TodoSummaryWidget = () => {
                             <span className="text-sm font-medium">{summary.dueDate.today}</span>
                         </div>
                         <div className="flex justify-between">
-                            <Link 
-                                to="/dashboard/todos?dateFilter=upcoming" 
+                            <Link
+                                to="/dashboard/todos?dateFilter=upcoming"
                                 className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
                             >
                                 Upcoming
@@ -109,10 +109,10 @@ const TodoSummaryWidget = () => {
                     </div>
                 </div>
             </div>
-            
+
             <div className="mt-3 text-center">
-                <Link 
-                    to="/dashboard/todos" 
+                <Link
+                    to="/dashboard/todos"
                     className="text-sm text-indigo-600 dark:text-indigo-400 hover:underline"
                 >
                     View All Todos →
