@@ -156,7 +156,7 @@ const Sidebar = ({ isExpanded, toggleSidebar }) => {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                                 </svg>
                             </div>
-                            <span className="text-lg font-semibold dark:text-white">MERN App</span>
+                            <span className="text-lg font-semibold dark:text-white">Taski</span>
                         </div>
                     )}
 
