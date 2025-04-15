@@ -1,9 +1,26 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTodo } from '../../context/TodoContext';
 
 const TodoFilter = ({ filters, onFilterChange }) => {
     const [isExpanded, setIsExpanded] = useState(false);
     const { loading } = useTodo();
+    const [isFiltersApplied, setIsFiltersApplied] = useState(false);
+    const [dateFilterType, setDateFilterType] = useState('any');
+    const [customDateFrom, setCustomDateFrom] = useState('');
+    const [customDateTo, setCustomDateTo] = useState('');
+
+    useEffect(() => {
+        // Check if any filter is applied
+        const hasFilters = 
+            filters.status !== '' || 
+            filters.priority !== '' || 
+            filters.category !== '' || 
+            filters.search !== '' ||
+            filters.dueDateFrom !== '' ||
+            filters.dueDateTo !== '';
+        
+        setIsFiltersApplied(hasFilters);
+    }, [filters]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -11,7 +28,9 @@ const TodoFilter = ({ filters, onFilterChange }) => {
     };
 
     const handleSearchChange = (e) => {
-        onFilterChange({ search: e.target.value });
+        // Debounce search input
+        const searchTerm = e.target.value;
+        onFilterChange({ search: searchTerm });
     };
 
     const clearFilters = () => {
@@ -19,11 +38,76 @@ const TodoFilter = ({ filters, onFilterChange }) => {
             status: '',
             priority: '',
             category: '',
-            search: ''
+            search: '',
+            dueDateFrom: '',
+            dueDateTo: ''
+        });
+        setDateFilterType('any');
+        setCustomDateFrom('');
+        setCustomDateTo('');
+    };
+
+    const handleDateFilterChange = (e) => {
+        const value = e.target.value;
+        setDateFilterType(value);
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        let fromDate = '';
+        let toDate = '';
+        
+        switch(value) {
+            case 'today':
+                fromDate = today.toISOString().split('T')[0];
+                toDate = today.toISOString().split('T')[0];
+                break;
+            case 'thisWeek':
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay());
+                const endOfWeek = new Date(today);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                fromDate = startOfWeek.toISOString().split('T')[0];
+                toDate = endOfWeek.toISOString().split('T')[0];
+                break;
+            case 'nextWeek':
+                const startOfNextWeek = new Date(today);
+                startOfNextWeek.setDate(today.getDate() - today.getDay() + 7);
+                const endOfNextWeek = new Date(today);
+                endOfNextWeek.setDate(startOfNextWeek.getDate() + 6);
+                fromDate = startOfNextWeek.toISOString().split('T')[0];
+                toDate = endOfNextWeek.toISOString().split('T')[0];
+                break;
+            case 'overdue':
+                toDate = new Date(today.setDate(today.getDate() - 1)).toISOString().split('T')[0];
+                break;
+            case 'noDueDate':
+                fromDate = 'none';
+                break;
+            case 'custom':
+                // Will be handled by separate inputs
+                break;
+            default:
+                // Any - clear both
+                break;
+        }
+        
+        onFilterChange({
+            dueDateFrom: fromDate,
+            dueDateTo: toDate
         });
     };
 
-    const isFiltersApplied = filters.status || filters.priority || filters.category;
+    const handleCustomDateChange = (e) => {
+        const { name, value } = e.target;
+        if (name === 'customDateFrom') {
+            setCustomDateFrom(value);
+            onFilterChange({ dueDateFrom: value });
+        } else if (name === 'customDateTo') {
+            setCustomDateTo(value);
+            onFilterChange({ dueDateTo: value });
+        }
+    };
 
     return (
         <div className="bg-white dark:bg-gray-800 rounded-md shadow p-4">
@@ -80,62 +164,116 @@ const TodoFilter = ({ filters, onFilterChange }) => {
 
             {/* Filter options */}
             {isExpanded && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Status
-                        </label>
-                        <select
-                            name="status"
-                            value={filters.status}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
-                            disabled={loading}
-                        >
-                            <option value="">All Statuses</option>
-                            <option value="todo">To Do</option>
-                            <option value="in_progress">In Progress</option>
-                            <option value="completed">Completed</option>
-                        </select>
+                <div className="mt-4 space-y-4">
+                    {/* First row of filters */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Status
+                            </label>
+                            <select
+                                name="status"
+                                value={filters.status}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                disabled={loading}
+                            >
+                                <option value="">All Statuses</option>
+                                <option value="todo">To Do</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="completed">Completed</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Priority
+                            </label>
+                            <select
+                                name="priority"
+                                value={filters.priority}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                disabled={loading}
+                            >
+                                <option value="">All Priorities</option>
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Category
+                            </label>
+                            <select
+                                name="category"
+                                value={filters.category}
+                                onChange={handleChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                disabled={loading}
+                            >
+                                <option value="">All Categories</option>
+                                <option value="general">General</option>
+                                <option value="work">Work</option>
+                                <option value="personal">Personal</option>
+                                <option value="shopping">Shopping</option>
+                                <option value="health">Health</option>
+                                <option value="education">Education</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div>
+                    {/* Second row for due date filters */}
+                    <div className="mt-4">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Priority
+                            Due Date
                         </label>
-                        <select
-                            name="priority"
-                            value={filters.priority}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
-                            disabled={loading}
-                        >
-                            <option value="">All Priorities</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <select
+                                name="dateFilterType"
+                                value={dateFilterType}
+                                onChange={handleDateFilterChange}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                disabled={loading}
+                            >
+                                <option value="any">Any Date</option>
+                                <option value="today">Today</option>
+                                <option value="thisWeek">This Week</option>
+                                <option value="nextWeek">Next Week</option>
+                                <option value="overdue">Overdue</option>
+                                <option value="noDueDate">No Due Date</option>
+                                <option value="custom">Custom Range</option>
+                            </select>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Category
-                        </label>
-                        <select
-                            name="category"
-                            value={filters.category}
-                            onChange={handleChange}
-                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
-                            disabled={loading}
-                        >
-                            <option value="">All Categories</option>
-                            <option value="general">General</option>
-                            <option value="work">Work</option>
-                            <option value="personal">Personal</option>
-                            <option value="shopping">Shopping</option>
-                            <option value="health">Health</option>
-                            <option value="education">Education</option>
-                        </select>
+                            {dateFilterType === 'custom' && (
+                                <>
+                                    <div className="md:col-span-1">
+                                        <input
+                                            type="date"
+                                            name="customDateFrom"
+                                            value={customDateFrom}
+                                            onChange={handleCustomDateChange}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                            placeholder="From"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                    <div className="md:col-span-1">
+                                        <input
+                                            type="date"
+                                            name="customDateTo"
+                                            value={customDateTo}
+                                            onChange={handleCustomDateChange}
+                                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white disabled:opacity-70"
+                                            placeholder="To"
+                                            disabled={loading}
+                                        />
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}

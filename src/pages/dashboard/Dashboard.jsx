@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Link } from 'react-router-dom';
 import axiosPrivate from '../../services/api/axiosPrivate';
+import TodoSummaryWidget from '../../components/dashboard/TodoSummaryWidget';
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -31,7 +32,7 @@ const Dashboard = () => {
         <h2 className="text-2xl font-semibold mb-4">Welcome, {user?.name}!</h2>
         <p className="mb-4">You've successfully logged in to your account.</p>
 
-        <div className="grid md:grid-cols-3 gap-6 mt-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
             <h3 className="font-semibold text-lg mb-2">Profile</h3>
             <p>View and manage your profile information</p>
@@ -56,12 +57,11 @@ const Dashboard = () => {
             <p>Configure your account settings</p>
             <span className="text-purple-600 dark:text-purple-400 mt-2 inline-block cursor-pointer">Coming Soon</span>
           </div>
-
-          <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-            <h3 className="font-semibold text-lg mb-2">Activity</h3>
-            <p>View your recent account activity</p>
-            <span className="text-green-600 dark:text-green-400 mt-2 inline-block cursor-pointer">Coming Soon</span>
-          </div>
+        </div>
+        
+        {/* Todo Priority and Due Date Summary Widget */}
+        <div className="mt-8">
+          <TodoSummaryWidget />
         </div>
       </div>
     </div>

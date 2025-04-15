@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useTodo } from '../../../context/TodoContext';
 import TodoList from '../../../components/todo/TodoList';
 import TodoFilter from '../../../components/todo/TodoFilter';
@@ -6,28 +7,66 @@ import TodoModal from '../../../components/todo/TodoModal';
 import toast from 'react-hot-toast';
 
 const Todo = () => {
-    const {
-        todos,
-        loading,
-        error,
-        filters,
-        pagination,
-        sortConfig,
+    const { 
+        todos, 
+        loading, 
+        error, 
+        filters, 
+        pagination, 
+        sortConfig, 
         fetchTodos,
-        updateFilters,
-        updateSortConfig,
-        changePage
+        updateFilters, 
+        updateSortConfig, 
+        changePage 
     } = useTodo();
+    const [searchParams] = useSearchParams();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTodo, setEditingTodo] = useState(null);
     const [initialLoad, setInitialLoad] = useState(true);
 
-    // Handle initial data loading
+    // Apply URL parameters as filters
     useEffect(() => {
         if (initialLoad) {
+            const urlFilters = {
+                priority: searchParams.get('priority') || '',
+                status: searchParams.get('status') || '',
+                category: searchParams.get('category') || '',
+                search: searchParams.get('search') || ''
+            };
+            
+            // Handle date filter from URL
+            const dateFilter = searchParams.get('dateFilter');
+            if (dateFilter) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                switch(dateFilter) {
+                    case 'today':
+                        urlFilters.dueDateFrom = today.toISOString().split('T')[0];
+                        urlFilters.dueDateTo = today.toISOString().split('T')[0];
+                        break;
+                    case 'overdue':
+                        urlFilters.dueDateTo = new Date(today.setDate(today.getDate() - 1)).toISOString().split('T')[0];
+                        break;
+                    case 'upcoming':
+                        const tomorrow = new Date(today);
+                        tomorrow.setDate(tomorrow.getDate() + 1);
+                        const nextWeek = new Date(today);
+                        nextWeek.setDate(nextWeek.getDate() + 7);
+                        urlFilters.dueDateFrom = tomorrow.toISOString().split('T')[0];
+                        urlFilters.dueDateTo = nextWeek.toISOString().split('T')[0];
+                        break;
+                }
+            }
+            
+            // Only update filters if there's at least one filter in the URL
+            if (Object.values(urlFilters).some(value => value !== '')) {
+                updateFilters(urlFilters);
+            }
+            
             fetchTodos().then(() => setInitialLoad(false));
         }
-    }, [fetchTodos, initialLoad]);
+    }, [fetchTodos, initialLoad, searchParams, updateFilters]);
 
     // Show any API errors as toast notifications
     useEffect(() => {

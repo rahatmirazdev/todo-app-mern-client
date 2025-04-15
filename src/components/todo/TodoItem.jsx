@@ -51,6 +51,36 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, isLoading }) => {
         }
     };
 
+    // Check if due date is overdue
+    const isOverdue = (dueDate) => {
+        if (!dueDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dueDateObj = new Date(dueDate);
+        dueDateObj.setHours(0, 0, 0, 0);
+        return dueDateObj < today && todo.status !== 'completed';
+    };
+
+    // Check if due date is today
+    const isDueToday = (dueDate) => {
+        if (!dueDate) return false;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dueDateObj = new Date(dueDate);
+        dueDateObj.setHours(0, 0, 0, 0);
+        return dueDateObj.getTime() === today.getTime();
+    };
+
+    // Get due date class
+    const getDueDateClass = (dueDate) => {
+        if (isOverdue(dueDate)) {
+            return 'text-red-600 font-medium dark:text-red-400';
+        } else if (isDueToday(dueDate)) {
+            return 'text-orange-600 font-medium dark:text-orange-400';
+        }
+        return 'text-gray-500 dark:text-gray-400';
+    };
+
     return (
         <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isLoading ? 'opacity-60' : ''}`}>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -94,8 +124,20 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, isLoading }) => {
                     {todo.priority.charAt(0).toUpperCase() + todo.priority.slice(1)}
                 </span>
             </td>
-            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                {formatDate(todo.dueDate)}
+            <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <div className={`flex items-center ${getDueDateClass(todo.dueDate)}`}>
+                    {isOverdue(todo.dueDate) && (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-red-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                    {isDueToday(todo.dueDate) && (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1 text-orange-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                        </svg>
+                    )}
+                    {formatDate(todo.dueDate)}
+                </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {isLoading ? (
