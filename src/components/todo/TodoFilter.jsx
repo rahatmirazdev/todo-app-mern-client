@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTodo } from '../../context/TodoContext';
+import debounce from 'lodash.debounce';
 
 const TodoFilter = ({ filters, onFilterChange }) => {
     const [isExpanded, setIsExpanded] = useState(false);
@@ -11,6 +12,30 @@ const TodoFilter = ({ filters, onFilterChange }) => {
     const [customDateTo, setCustomDateTo] = useState('');
     const [selectedTags, setSelectedTags] = useState([]);
     const [availableTags, setAvailableTags] = useState([]);
+    const [searchInput, setSearchInput] = useState(filters.search || '');
+
+    // Create debounced search function
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const debouncedSearch = useCallback(
+        debounce((searchTerm) => {
+            onFilterChange({ search: searchTerm });
+        }, 500),
+        [onFilterChange]
+    );
+
+    // Initialize searchInput from filters on mount
+    useEffect(() => {
+        if (filters.search) {
+            setSearchInput(filters.search);
+        }
+    }, []);
+
+    // Update searchInput when filters.search changes externally
+    useEffect(() => {
+        if (filters.search !== searchInput && filters.search !== undefined) {
+            setSearchInput(filters.search);
+        }
+    }, [filters.search]);
 
     useEffect(() => {
         // Check if any filter is applied
@@ -47,12 +72,13 @@ const TodoFilter = ({ filters, onFilterChange }) => {
     };
 
     const handleSearchChange = (e) => {
-        // Debounce search input
-        const searchTerm = e.target.value;
-        onFilterChange({ search: searchTerm });
+        const value = e.target.value;
+        setSearchInput(value);
+        debouncedSearch(value);
     };
 
     const clearFilters = () => {
+        setSearchInput('');
         onFilterChange({
             status: '',
             priority: '',
@@ -153,11 +179,26 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                 <input
                     type="text"
                     placeholder="Search todos..."
-                    value={filters.search}
+                    value={searchInput}
                     onChange={handleSearchChange}
                     className="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 dark:bg-gray-700 dark:text-white"
                     disabled={loading}
                 />
+                {/* Clear search button */}
+                {searchInput && (
+                    <button
+                        onClick={() => {
+                            setSearchInput('');
+                            onFilterChange({ search: '' });
+                        }}
+                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        disabled={loading}
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                        </svg>
+                    </button>
+                )}
                 <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                     {loading ? (
                         <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

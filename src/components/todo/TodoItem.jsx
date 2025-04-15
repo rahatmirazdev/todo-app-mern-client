@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoading }) => {
+const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoading, searchHighlight }) => {
     const [showDetails, setShowDetails] = useState(false);
 
     // Format date
@@ -81,6 +81,21 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoa
         return 'text-gray-500 dark:text-gray-400';
     };
 
+    // Highlight search terms in text
+    const highlightText = (text, highlight) => {
+        if (!highlight || !text) return text;
+        
+        // Escape special regex characters
+        const sanitizedHighlight = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const parts = text.split(new RegExp(`(${sanitizedHighlight})`, 'gi'));
+        
+        return parts.map((part, index) => 
+            part.toLowerCase() === highlight.toLowerCase() 
+                ? <mark key={index} className="bg-yellow-200 dark:bg-yellow-700 px-1 rounded">{part}</mark> 
+                : part
+        );
+    };
+
     return (
         <tr className={`hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors ${isLoading ? 'opacity-60' : ''}`}>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -100,9 +115,30 @@ const TodoItem = ({ todo, onStatusChange, onDelete, onEdit, onViewHistory, isLoa
                         )}
                     </button>
                     <div>
-                        <div className="font-medium text-gray-900 dark:text-white">{todo.title}</div>
+                        <div className="font-medium text-gray-900 dark:text-white">
+                            {searchHighlight ? highlightText(todo.title, searchHighlight) : todo.title}
+                        </div>
                         {showDetails && todo.description && (
-                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{todo.description}</p>
+                            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                                {searchHighlight ? highlightText(todo.description, searchHighlight) : todo.description}
+                            </p>
+                        )}
+                        {/* Show tags with highlight if search is active */}
+                        {(showDetails || searchHighlight) && todo.tags && todo.tags.length > 0 && (
+                            <div className="mt-1 flex flex-wrap gap-1">
+                                {todo.tags.map((tag, idx) => (
+                                    <span 
+                                        key={idx} 
+                                        className={`px-2 py-0.5 rounded-full text-xs ${
+                                            searchHighlight && tag.toLowerCase().includes(searchHighlight.toLowerCase())
+                                                ? 'bg-yellow-200 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-200'
+                                                : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                                        }`}
+                                    >
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
