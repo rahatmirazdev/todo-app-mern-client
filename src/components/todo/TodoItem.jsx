@@ -90,6 +90,12 @@ const TodoItem = ({
                 <TodoDueDate dueDate={todo.dueDate} status={todo.status} />
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {todo.createdAt && new Date(todo.createdAt).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                {todo.completedAt && new Date(todo.completedAt).toLocaleDateString()}
+            </td>
+            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {isLoading ? (
                     <div className="flex justify-center">
                         <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-indigo-500"></div>

@@ -10,6 +10,7 @@ const TodoTable = memo(({
     handleDelete,
     onEdit,
     onViewHistory,
+    onViewSeries,
     actionLoading
 }) => {
     return (
@@ -80,6 +81,7 @@ const TodoTable = memo(({
                         onDelete={handleDelete}
                         onEdit={onEdit}
                         onViewHistory={onViewHistory}
+                        onViewSeries={onViewSeries}
                         isLoading={actionLoading === todo._id}
                     />
                 ))}
