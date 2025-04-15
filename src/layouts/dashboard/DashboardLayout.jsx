@@ -12,7 +12,7 @@ const DashboardLayout = () => {
     const { user } = useAuth();
     const { theme } = useTheme();
     const location = useLocation();
-    
+
     // Check if current route is analytics page
     const isAnalyticsPage = location.pathname === '/dashboard/analytics';
 
