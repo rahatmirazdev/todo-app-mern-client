@@ -423,6 +423,7 @@ const TodoFilter = ({ filters, onFilterChange }) => {
                                 <option value="">Any</option>
                                 <option value="true">Has subtasks</option>
                                 <option value="false">No subtasks</option>
+
                             </select>
                         </div>
 
