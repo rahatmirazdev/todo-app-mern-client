@@ -157,6 +157,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                                 onStatusChange={handleStatusChange}
                                 onDelete={handleDelete}
                                 onEdit={onEdit}
+                                onViewHistory={onViewHistory} // Add this line to pass the prop
                                 isLoading={actionLoading === todo._id}
                             />
                         ))}
