@@ -12,7 +12,10 @@
   "dependencies": {
     "axios": "^1.8.4",
     "chart.js": "^4.4.9",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "date-fns": "^4.1.0",
     "firebase": "^11.6.0",
+    "html-to-image": "^1.11.13",
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",
     "match-sorter": "^8.0.0",

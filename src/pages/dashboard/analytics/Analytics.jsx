@@ -1,22 +1,31 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
+import React, { useState, useEffect, useCallback, lazy, useRef } from 'react';
 import axiosPrivate from '../../../services/api/axiosPrivate';
 import { useTodo } from '../../../context/TodoContext';
+import { useNavigate } from 'react-router-dom';
+import { toPng } from 'html-to-image';
+
+// Custom components
+import LoadingState from '../../../components/analytics/common/LoadingState';
+import ErrorState from '../../../components/analytics/common/ErrorState';
+import HelpTooltip from '../../../components/analytics/common/HelpTooltip';
+import AnalyticsHeader from '../../../components/analytics/AnalyticsHeader';
+import TotalTasksCard from '../../../components/analytics/summary/TotalTasksCard';
+import CompletionRateCard from '../../../components/analytics/summary/CompletionRateCard';
+import OverdueTasksCard from '../../../components/analytics/summary/OverdueTasksCard';
+import ChartContainer from '../../../components/analytics/charts/ChartContainer';
 
 // Lazy load chart components
 const TaskCompletionChart = lazy(() => import('../../../components/analytics/TaskCompletionChart'));
 const TasksByPriorityChart = lazy(() => import('../../../components/analytics/TasksByPriorityChart'));
 const TasksOverTimeChart = lazy(() => import('../../../components/analytics/TasksOverTimeChart'));
 
-// Loading fallback component
-const ChartPlaceholder = () => (
-  <div className="w-full h-full bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center">
-    <p className="text-gray-500 dark:text-gray-400">Loading chart...</p>
-  </div>
-);
-
 const Analytics = () => {
   const { todos } = useTodo();
+  const navigate = useNavigate();
+  const analyticsRef = useRef(null);
+
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -31,11 +40,14 @@ const Analytics = () => {
     weekly: 0,
     monthly: 0
   });
+  const [isExporting, setIsExporting] = useState(false);
+  const [tooltip, setTooltip] = useState(null);
 
   // Memoize fetch function to avoid recreation on each render
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
 
       // Fetch basic stats
       const statsResponse = await axiosPrivate.get('/todos/stats');
@@ -58,100 +70,135 @@ const Analytics = () => {
       });
     } catch (error) {
       console.error('Error fetching analytics data:', error);
+      setError('Failed to load analytics data. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [axiosPrivate]);
 
   useEffect(() => {
     fetchAnalytics();
   }, [fetchAnalytics]);
 
+  // Handle clicks on chart segments to filter tasks
+  const handleStatusClick = useCallback((status) => {
+    navigate(`/dashboard/todos?status=${status}`);
+  }, [navigate]);
+
+  const handlePriorityClick = useCallback((priority) => {
+    navigate(`/dashboard/todos?priority=${priority}`);
+  }, [navigate]);
+
+  // Export dashboard as image
+  const handleExportImage = useCallback(async () => {
+    if (!analyticsRef.current) return;
+
+    try {
+      setIsExporting(true);
+      const dataUrl = await toPng(analyticsRef.current, { quality: 0.95 });
+
+      // Create download link
+      const link = document.createElement('a');
+      link.download = `task-analytics-${new Date().toISOString().split('T')[0]}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch (err) {
+      console.error('Failed to export dashboard:', err);
+    } finally {
+      setIsExporting(false);
+    }
+  }, []);
+
+  // Show tooltip with help text
+  const showHelp = (helpType) => {
+    switch (helpType) {
+      case 'completion':
+        setTooltip({
+          type: 'completion',
+          text: 'Shows the percentage of tasks marked as completed out of all tasks. Higher is better!'
+        });
+        break;
+      case 'trend':
+        setTooltip({
+          type: 'trend',
+          text: 'Shows how your task metrics have changed compared to the previous period.'
+        });
+        break;
+      case 'overdue':
+        setTooltip({
+          type: 'overdue',
+          text: 'Tasks whose due dates have passed without being completed. Should be addressed soon!'
+        });
+        break;
+      default:
+        setTooltip(null);
+    }
+  };
+
   if (loading) {
+    return <LoadingState />;
+  }
+
+  if (error) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 h-96 flex justify-center items-center">
-        <div className="flex flex-col items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mb-4"></div>
-          <p className="text-gray-500 dark:text-gray-400">Loading analytics data...</p>
-        </div>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+        <ErrorState message={error} onRetry={fetchAnalytics} />
       </div>
     );
   }
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
-      <h2 className="text-2xl font-semibold mb-6 text-gray-800 dark:text-white">Task Analytics</h2>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 pb-2 mb-0" ref={analyticsRef}>
+      <AnalyticsHeader
+        onExport={handleExportImage}
+        onRefresh={fetchAnalytics}
+        isExporting={isExporting}
+      />
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <h3 className="font-semibold text-lg mb-2 text-blue-700 dark:text-blue-300">Total Tasks</h3>
-          <p className="text-3xl font-bold text-blue-800 dark:text-blue-200">{stats.total}</p>
-          <div className="flex items-center mt-2 text-sm text-blue-600 dark:text-blue-400">
-            <span className="flex items-center">
-              <svg className={`w-3 h-3 mr-1 ${taskTrend.monthly >= 0 ? '' : 'transform rotate-180'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 5l7 7-7 7-7-7 7-7z" fill="currentColor" />
-              </svg>
-              {Math.abs(taskTrend.monthly)}%
-            </span>
-            <span className="ml-2">vs last month</span>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <TotalTasksCard
+          total={stats.total}
+          trend={taskTrend.monthly}
+          showHelp={showHelp}
+        />
 
-        <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-          <h3 className="font-semibold text-lg mb-2 text-green-700 dark:text-green-300">Completion Rate</h3>
-          <p className="text-3xl font-bold text-green-800 dark:text-green-200">{completionRate}%</p>
-          <div className="flex items-center mt-2 text-sm text-green-600 dark:text-green-400">
-            <span className="flex items-center">
-              <svg className={`w-3 h-3 mr-1 ${taskTrend.weekly >= 0 ? '' : 'transform rotate-180'}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 5l7 7-7 7-7-7 7-7z" fill="currentColor" />
-              </svg>
-              {Math.abs(taskTrend.weekly)}%
-            </span>
-            <span className="ml-2">vs last week</span>
-          </div>
-        </div>
+        <CompletionRateCard
+          completionRate={completionRate}
+          trend={taskTrend.weekly}
+          showHelp={showHelp}
+        />
 
-        <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-          <h3 className="font-semibold text-lg mb-2 text-purple-700 dark:text-purple-300">Overdue Tasks</h3>
-          <p className="text-3xl font-bold text-purple-800 dark:text-purple-200">{summary.dueDate.overdue}</p>
-          <div className="flex items-center mt-2 text-sm text-purple-600 dark:text-purple-400">
-            <span>Requires immediate attention</span>
-          </div>
-        </div>
+        <OverdueTasksCard
+          overdueCount={summary.dueDate.overdue}
+          showHelp={showHelp}
+          navigate={navigate}
+        />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks by Status</h3>
-          <div className="h-64">
-            <Suspense fallback={<ChartPlaceholder />}>
-              <TaskCompletionChart active={stats.active} completed={stats.completed} />
-            </Suspense>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+        <ChartContainer title="Tasks by Status">
+          <TaskCompletionChart
+            active={stats.active}
+            completed={stats.completed}
+            onSegmentClick={handleStatusClick}
+          />
+        </ChartContainer>
 
-        <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks by Priority</h3>
-          <div className="h-64">
-            <Suspense fallback={<ChartPlaceholder />}>
-              <TasksByPriorityChart
-                high={summary.priority.high}
-                medium={summary.priority.medium}
-                low={summary.priority.low}
-              />
-            </Suspense>
-          </div>
-        </div>
+        <ChartContainer title="Tasks by Priority">
+          <TasksByPriorityChart
+            high={summary.priority.high}
+            medium={summary.priority.medium}
+            low={summary.priority.low}
+            onPriorityClick={handlePriorityClick}
+          />
+        </ChartContainer>
       </div>
 
-      <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks Over Time</h3>
-        <div className="h-80">
-          <Suspense fallback={<ChartPlaceholder />}>
-            <TasksOverTimeChart todos={todos} />
-          </Suspense>
-        </div>
-      </div>
+      <ChartContainer title="Tasks Over Time" height="h-80">
+        <TasksOverTimeChart todos={todos} />
+      </ChartContainer>
+
+      <HelpTooltip tooltip={tooltip} setTooltip={setTooltip} />
     </div>
   );
 };
