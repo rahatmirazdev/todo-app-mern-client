@@ -23,44 +23,46 @@ const Search = () => {
     const [historyModal, setHistoryModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
     const [initialLoad, setInitialLoad] = useState(true);
     const urlUpdateTimeoutRef = useRef(null);
-    const isMountedRef = useRef(true); // Track component mount state
+    const isMountedRef = useRef(true);
     const [isSearching, setIsSearching] = useState(false);
 
     const searchQuery = searchParams.get('q') || '';
 
-    // Update URL and trigger search after delay
+    // Function to execute search
     const handleSearch = useCallback((searchTerm) => {
         // Clear any existing timeout
         if (urlUpdateTimeoutRef.current) {
             clearTimeout(urlUpdateTimeoutRef.current);
+            urlUpdateTimeoutRef.current = null;
         }
 
-        if (searchTerm) {
-            setIsSearching(true);
+        setIsSearching(true);
 
-            // Delay both URL update and actual search
-            urlUpdateTimeoutRef.current = setTimeout(() => {
-                if (isMountedRef.current) {
-                    // Update URL
-                    setSearchParams({ q: searchTerm });
+        // Batch these operations to minimize re-renders
+        setTimeout(() => {
+            // Update URL first
+            if (searchTerm) {
+                setSearchParams({ q: searchTerm });
+            } else {
+                setSearchParams({});
+            }
 
-                    // Trigger actual search
-                    updateFilters({ search: searchTerm });
-                    fetchTodos().then(() => {
-                        if (isMountedRef.current) {
-                            setIsSearching(false);
-                        }
-                    });
-                }
-                urlUpdateTimeoutRef.current = null;
-            }, 800); // Shorter delay for better UX
-        } else {
-            // Clear search immediately
-            setSearchParams({});
-            updateFilters({ search: '' });
-            fetchTodos();
-        }
-    }, [setSearchParams, updateFilters, fetchTodos]);
+            // Then update filters and fetch
+            updateFilters({ search: searchTerm });
+
+            fetchTodos()
+                .then(() => {
+                    if (isMountedRef.current) {
+                        setIsSearching(false);
+                    }
+                })
+                .catch(() => {
+                    if (isMountedRef.current) {
+                        setIsSearching(false);
+                    }
+                });
+        }, 0);
+    }, [fetchTodos, updateFilters, setSearchParams]);
 
     // Apply URL search parameter on initial load
     useEffect(() => {
@@ -115,21 +117,17 @@ const Search = () => {
         toast.error(message || 'An error occurred');
     };
 
-    // Custom filter change handler
+    // Filter change handler - now only used for non-search filters
     const handleFilterChange = useCallback((filterUpdate) => {
-        if ('search' in filterUpdate) {
-            // For search changes, we delay the actual update
-            if (filterUpdate.search === '') {
-                // Clear search immediately
-                setSearchParams({});
-                updateFilters({ search: '' });
-            }
-            // Otherwise, wait for explicit search trigger from TodoFilter
-        } else {
-            // For non-search filters, update immediately
+        // For search changes, we don't want to trigger automatic searching
+        if ('search' in filterUpdate && filterUpdate.search === '') {
+            // For explicit search clear, we run the search with empty term
+            handleSearch('');
+        } else if (!('search' in filterUpdate)) {
+            // For non-search filters, update them immediately
             updateFilters(filterUpdate);
         }
-    }, [updateFilters, setSearchParams]);
+    }, [updateFilters, handleSearch]);
 
     return (
         <div className="space-y-6">

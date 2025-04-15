@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTodo } from '../../../context/TodoContext';
 import TodoList from '../../../components/todo/TodoList';
@@ -112,6 +112,12 @@ const Todo = () => {
         toast.error(message || 'An error occurred');
     };
 
+    // Add a handler for search in the Todo component
+    const handleSearch = useCallback((searchTerm) => {
+        updateFilters({ search: searchTerm });
+        fetchTodos();
+    }, [updateFilters, fetchTodos]);
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -151,6 +157,8 @@ const Todo = () => {
                 <TodoFilter
                     filters={filters}
                     onFilterChange={updateFilters}
+                    onSearch={handleSearch}
+                    isSearching={loading}
                 />
             )}
 
