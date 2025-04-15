@@ -1,20 +1,19 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 import { Pie } from 'react-chartjs-2';
 
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const TaskCompletionChart = ({ active, completed }) => {
-    // Use a neutral color scheme that works in both dark and light modes
-    const options = {
+const TaskCompletionChart = React.memo(({ active, completed }) => {
+    // Memoize options to prevent recreation on each render
+    const options = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         plugins: {
             legend: {
                 position: 'bottom',
                 labels: {
-                    // Use a color that's visible in both modes
                     color: '#9CA3AF', // text-gray-400 equivalent
                     padding: 20,
                     font: {
@@ -23,7 +22,6 @@ const TaskCompletionChart = ({ active, completed }) => {
                 }
             },
             tooltip: {
-                // Use semi-transparent backgrounds that work in both modes
                 backgroundColor: 'rgba(60, 60, 60, 0.8)',
                 titleColor: 'rgba(255, 255, 255, 0.9)',
                 bodyColor: 'rgba(255, 255, 255, 0.9)',
@@ -39,9 +37,10 @@ const TaskCompletionChart = ({ active, completed }) => {
                 }
             }
         }
-    };
+    }), []);
 
-    const data = {
+    // Memoize data to prevent recreation on each render
+    const data = useMemo(() => ({
         labels: ['Active', 'Completed'],
         datasets: [
             {
@@ -57,13 +56,15 @@ const TaskCompletionChart = ({ active, completed }) => {
                 borderWidth: 1,
             },
         ],
-    };
+    }), [active, completed]);
 
     return (
         <div className="w-full h-full bg-white dark:bg-gray-800 rounded-lg p-4">
             <Pie data={data} options={options} />
         </div>
     );
-};
+});
+
+TaskCompletionChart.displayName = 'TaskCompletionChart';
 
 export default TaskCompletionChart;

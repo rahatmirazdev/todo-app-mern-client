@@ -1,9 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import axiosPrivate from '../../../services/api/axiosPrivate';
 import { useTodo } from '../../../context/TodoContext';
-import TaskCompletionChart from '../../../components/analytics/TaskCompletionChart';
-import TasksByPriorityChart from '../../../components/analytics/TasksByPriorityChart';
-import TasksOverTimeChart from '../../../components/analytics/TasksOverTimeChart';
+
+// Lazy load chart components
+const TaskCompletionChart = lazy(() => import('../../../components/analytics/TaskCompletionChart'));
+const TasksByPriorityChart = lazy(() => import('../../../components/analytics/TasksByPriorityChart'));
+const TasksOverTimeChart = lazy(() => import('../../../components/analytics/TasksOverTimeChart'));
+
+// Loading fallback component
+const ChartPlaceholder = () => (
+  <div className="w-full h-full bg-gray-100 dark:bg-gray-700 rounded-lg animate-pulse flex items-center justify-center">
+    <p className="text-gray-500 dark:text-gray-400">Loading chart...</p>
+  </div>
+);
 
 const Analytics = () => {
   const { todos } = useTodo();
@@ -23,39 +32,40 @@ const Analytics = () => {
     monthly: 0
   });
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        setLoading(true);
+  // Memoize fetch function to avoid recreation on each render
+  const fetchAnalytics = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        // Fetch basic stats
-        const statsResponse = await axiosPrivate.get('/todos/stats');
-        setStats(statsResponse.data);
+      // Fetch basic stats
+      const statsResponse = await axiosPrivate.get('/todos/stats');
+      setStats(statsResponse.data);
 
-        // Calculate completion rate
-        const total = statsResponse.data.total;
-        const completed = statsResponse.data.completed;
-        setCompletionRate(total > 0 ? Math.round((completed / total) * 100) : 0);
+      // Calculate completion rate
+      const total = statsResponse.data.total;
+      const completed = statsResponse.data.completed;
+      setCompletionRate(total > 0 ? Math.round((completed / total) * 100) : 0);
 
-        // Fetch summary data
-        const summaryResponse = await axiosPrivate.get('/todos/summary');
-        setSummary(summaryResponse.data);
+      // Fetch summary data
+      const summaryResponse = await axiosPrivate.get('/todos/summary');
+      setSummary(summaryResponse.data);
 
-        // Calculate task trend
-        // This is a mockup - in a real app, you'd have historical data
-        setTaskTrend({
-          weekly: Math.floor(Math.random() * 30) - 10, // Random number between -10 and 20
-          monthly: Math.floor(Math.random() * 40) - 15 // Random number between -15 and 25
-        });
-      } catch (error) {
-        console.error('Error fetching analytics data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchAnalytics();
+      // Calculate task trend
+      // This is a mockup - in a real app, you'd have historical data
+      setTaskTrend({
+        weekly: Math.floor(Math.random() * 30) - 10, // Random number between -10 and 20
+        monthly: Math.floor(Math.random() * 40) - 15 // Random number between -15 and 25
+      });
+    } catch (error) {
+      console.error('Error fetching analytics data:', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   if (loading) {
     return (
@@ -114,18 +124,22 @@ const Analytics = () => {
         <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks by Status</h3>
           <div className="h-64">
-            <TaskCompletionChart active={stats.active} completed={stats.completed} />
+            <Suspense fallback={<ChartPlaceholder />}>
+              <TaskCompletionChart active={stats.active} completed={stats.completed} />
+            </Suspense>
           </div>
         </div>
 
         <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
           <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks by Priority</h3>
           <div className="h-64">
-            <TasksByPriorityChart
-              high={summary.priority.high}
-              medium={summary.priority.medium}
-              low={summary.priority.low}
-            />
+            <Suspense fallback={<ChartPlaceholder />}>
+              <TasksByPriorityChart
+                high={summary.priority.high}
+                medium={summary.priority.medium}
+                low={summary.priority.low}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
@@ -133,11 +147,13 @@ const Analytics = () => {
       <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-6">
         <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Tasks Over Time</h3>
         <div className="h-80">
-          <TasksOverTimeChart todos={todos} />
+          <Suspense fallback={<ChartPlaceholder />}>
+            <TasksOverTimeChart todos={todos} />
+          </Suspense>
         </div>
       </div>
     </div>
   );
 };
 
-export default Analytics;
+export default React.memo(Analytics);

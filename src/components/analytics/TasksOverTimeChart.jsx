@@ -5,9 +5,9 @@ import { Line } from 'react-chartjs-2';
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const TasksOverTimeChart = ({ todos }) => {
-    // Use a neutral configuration that works in both themes
-    const options = {
+const TasksOverTimeChart = React.memo(({ todos }) => {
+    // Memoize options to prevent recreation on each render
+    const options = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         scales: {
@@ -50,7 +50,7 @@ const TasksOverTimeChart = ({ todos }) => {
                 borderWidth: 1,
             }
         },
-    };
+    }), []);
 
     // Process data for chart
     const chartData = useMemo(() => {
@@ -125,6 +125,8 @@ const TasksOverTimeChart = ({ todos }) => {
             <Line data={chartData} options={options} />
         </div>
     );
-};
+});
+
+TasksOverTimeChart.displayName = 'TasksOverTimeChart';
 
 export default TasksOverTimeChart;

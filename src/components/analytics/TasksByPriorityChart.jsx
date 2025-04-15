@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
 import { Bar } from 'react-chartjs-2';
 
 // Register ChartJS components
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-const TasksByPriorityChart = ({ high, medium, low }) => {
-    // Use a neutral configuration that works in both themes
-    const options = {
+const TasksByPriorityChart = React.memo(({ high, medium, low }) => {
+    // Memoize options to prevent recreation on each render
+    const options = useMemo(() => ({
         responsive: true,
         maintainAspectRatio: false,
         scales: {
@@ -48,9 +48,10 @@ const TasksByPriorityChart = ({ high, medium, low }) => {
                 borderWidth: 1,
             }
         },
-    };
+    }), []);
 
-    const data = {
+    // Memoize data to prevent recreation on each render
+    const data = useMemo(() => ({
         labels: ['High', 'Medium', 'Low'],
         datasets: [
             {
@@ -69,13 +70,15 @@ const TasksByPriorityChart = ({ high, medium, low }) => {
                 borderWidth: 1,
             },
         ],
-    };
+    }), [high, medium, low]);
 
     return (
         <div className="w-full h-full bg-white dark:bg-gray-800 rounded-lg p-4">
             <Bar data={data} options={options} />
         </div>
     );
-};
+});
+
+TasksByPriorityChart.displayName = 'TasksByPriorityChart';
 
 export default TasksByPriorityChart;
