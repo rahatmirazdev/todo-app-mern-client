@@ -5,7 +5,7 @@ const PerformanceMonitor = ({ id, children }) => {
 
     useEffect(() => {
         setRenderCount(prev => prev + 1);
-        console.log(`Component ${id} rendered ${renderCount + 1} times`);
+        // console.log(`Component ${id} rendered ${renderCount + 1} times`);
     });
 
     return <>{children}</>;

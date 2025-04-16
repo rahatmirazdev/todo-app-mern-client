@@ -141,6 +141,23 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoading(false);
         }
+
+        try {
+            const response = await axiosPublic.post('/auth/google', { token });
+
+            const { token: authToken, ...userData } = response.data;
+
+            localStorage.setItem('userToken', authToken);
+            localStorage.setItem('userInfo', JSON.stringify(userData));
+
+            setUser(userData);
+            return true;
+        } catch (error) {
+            // console.error('Google login error:', error);
+            throw error;
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
     const register = useCallback(async (userData) => {
@@ -156,7 +173,7 @@ export const AuthProvider = ({ children }) => {
             setUser(registeredUser);
             return true;
         } catch (error) {
-            console.error('Registration error:', error);
+            // console.error('Registration error:', error);
             throw new Error(error.response?.data?.message || 'Failed to register');
         } finally {
             setLoading(false);

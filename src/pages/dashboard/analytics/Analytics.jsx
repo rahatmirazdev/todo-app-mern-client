@@ -69,7 +69,6 @@ const Analytics = () => {
         monthly: Math.floor(Math.random() * 40) - 15 // Random number between -15 and 25
       });
     } catch (error) {
-      console.error('Error fetching analytics data:', error);
       setError('Failed to load analytics data. Please try again.');
     } finally {
       setLoading(false);
@@ -103,7 +102,6 @@ const Analytics = () => {
       link.href = dataUrl;
       link.click();
     } catch (err) {
-      console.error('Failed to export dashboard:', err);
     } finally {
       setIsExporting(false);
     }
