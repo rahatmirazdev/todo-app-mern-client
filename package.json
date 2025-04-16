@@ -17,6 +17,7 @@
     "date-fns": "^4.1.0",
     "firebase": "^11.6.0",
     "html-to-image": "^1.11.13",
+    "jspdf": "^3.0.1",
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",
     "match-sorter": "^8.0.0",
