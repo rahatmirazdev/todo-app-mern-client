@@ -1,119 +1,167 @@
-# MERN Starter Pack
+# MERN Todo App - Frontend
 
-A starter template for building web applications using the MERN stack (MongoDB, Express, React, Node.js) with Firebase authentication.
+A modern, responsive todo application frontend built with React and Tailwind CSS. This application provides a beautiful user interface for task management with advanced features like analytics, calendar view, and AI assistance.
 
 ## Features
 
-- React frontend with Vite
-- Node.js/Express backend
-- MongoDB database integration
-- Firebase authentication
-- JWT token implementation
-- Environment configuration
+- 🎨 Beautiful responsive UI with light/dark mode
+- 📊 Analytics dashboard with task statistics and charts
+- 📅 Calendar view for scheduled tasks
+- 📝 Kanban board for visual task management
+- 🔍 Advanced filtering and search capabilities
+- 🏷️ Task categorization with tags
+- 🔔 Browser notifications
+- 🔄 Recurring tasks support
+- 📱 Mobile-friendly design
+- 🎯 Subtasks for breaking down complex tasks
+- 📋 Task dependencies
+- 🧠 AI-powered task creation assistant
+- 📤 Export tasks to PDF and JSON
 
-## Setup Instructions
+## Tech Stack
 
-### Prerequisites
+- **React** - UI library
+- **React Router** - Client-side routing
+- **Tailwind CSS** - Utility-first CSS framework
+- **Chart.js** - Interactive charts for analytics
+- **React DnD** - Drag and drop for Kanban board
+- **React Hot Toast** - Notification system
+- **Axios** - HTTP client
+- **Context API** - State management
+- **jsPDF** - PDF generation
 
-- Node.js and npm installed
-- MongoDB Atlas account
-- Firebase project
+## Prerequisites
 
-### Installation
+- Node.js (v14 or higher)
+- Backend API running (refer to backend README)
 
-1. Clone the repository
+## Installation
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd mern-todo/frontend
+   ```
+
+2. Install dependencies:
+   ```bash
+   bun install
+   ```
+
+3. Create a `.env` file in the root directory with your backend URL:
+   ```
+   VITE_API_URL=http://localhost:5000
+   ```
+
+4. Start the development server:
+   ```bash
+   bun dev
+   ```
+
+5. Access the application at `http://localhost:5173`
+
+## Main Components
+
+### TodoModal
+
+The task creation and editing modal with fields for:
+- Basic task information (title, description)
+- Status and priority
+- Due date and category
+- Tags and dependencies
+- Subtasks
+- Scheduling options
+- Natural language input
+
+### TodoList
+
+Displays tasks in a table view with:
+- Sortable columns
+- Status toggle
+- Priority indicator
+- Due date display
+- Actions menu
+
+### KanbanBoard
+
+Visual task management with draggable cards organized by status.
+
+### Analytics Dashboard
+
+Provides visual insights with:
+- Task completion rate
+- Tasks by priority
+- Tasks over time
+- Task trends
+
+### Calendar View
+
+Calendar-based task visualization showing:
+- Tasks due on specific dates
+- Scheduled tasks
+- Task details on click
+
+## Features in Detail
+
+### Task Management
+
+- Create, edit, and delete tasks
+- Mark tasks as complete or in progress
+- Set priorities (low, medium, high)
+- Categorize tasks (work, personal, etc.)
+- Add tags for additional organization
+- Set due dates and reminders
+- Break tasks into subtasks
+- Set task dependencies
+- Recurring tasks with various patterns
+
+### User Experience
+
+- Dark/light mode toggle
+- Mobile-responsive layout
+- Toast notifications
+- Browser notifications
+- Celebration animations on task completion
+- Keyboard shortcuts
+
+### Data Features
+
+- Search and advanced filtering
+- Sort by multiple columns
+- Export tasks to PDF
+- Export/import tasks as JSON
+- View task history
+
+### AI Assistant
+
+- Natural language task creation
+- AI subtask suggestions
+- Smart scheduling recommendations
+
+## State Management
+
+The application uses React Context for state management:
+- AuthContext - Authentication state
+- TodoContext - Task data and operations
+- ThemeContext - UI theme preferences
+- NotificationContext - Notification management
+
+## Building for Production
+
+To create a production build:
+
 ```bash
-git clone <repository-url>
-cd mern-starter-pack
+bun build
 ```
 
-2. Install dependencies
-```bash
-# Install frontend dependencies
-cd frontend
-npm install
+The build artifacts will be located in the `dist/` directory.
 
-# Install backend dependencies
-cd ../backend
-npm install
-```
-
-3. Environment Configuration
-
-#### Frontend (.env file in frontend directory)
-Create a `.env` file in the frontend directory with the following variables:
-```
-# Firebase Configuration (Client-side)
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_firebase_app_id
-```
-
-#### Backend (.env file in backend directory)
-Create a `.env` file in the backend directory with the following variables:
-```
-# MongoDB Configuration
-MONGODB_URI=your_mongodb_connection_string
-MONGODB_DB_NAME=your_database_name
-
-# JWT Configuration
-# Generate a secure random string for JWT token signing
-# You can generate one using: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
-JWT_SECRET=your_generated_jwt_secret
-
-# Environment
-NODE_ENV=development
-```
-
-## Running the Application
-
-### Development Mode
+## Testing
 
 ```bash
-# Start frontend (from frontend directory)
-npm run dev
-
-# Start backend (from backend directory)
-npm run dev
+bun test
 ```
 
-### Production Mode
+## Contributing
 
-```bash
-# Build frontend (from frontend directory)
-npm run build
-
-# Start backend in production mode (from backend directory)
-npm start
-```
-
-## Project Structure
-
-```
-mern-starter-pack/
-├── frontend/           # React frontend with Vite
-│   ├── public/         # Static assets
-│   ├── src/            # Source files
-│   └── .env            # Frontend environment variables
-│
-└── backend/            # Node.js/Express backend
-    ├── config/         # Configuration files
-    ├── controllers/    # Route controllers
-    ├── models/         # MongoDB models
-    ├── routes/         # API routes
-    ├── utils/          # Utility functions
-    └── .env            # Backend environment variables
-```
-
-## Security Notes
-
-- Never commit your `.env` files to version control
-- Keep your JWT secret secure
-- Implement proper authentication and authorization
-
-## License
-
-[MIT](LICENSE)
+Contributions are welcome! Please feel free to submit a Pull Request.
