@@ -94,6 +94,27 @@ const TodoTable = memo(({
             </tbody>
         </table>
     );
+}, (prevProps, nextProps) => {
+    // Deep comparison for todos array
+    const todosEqual = prevProps.todos.length === nextProps.todos.length &&
+        prevProps.todos.every((todo, index) => {
+            const nextTodo = nextProps.todos[index];
+            return (
+                todo._id === nextTodo._id &&
+                todo.status === nextTodo.status &&
+                todo.title === nextTodo.title &&
+                todo.priority === nextTodo.priority &&
+                todo.dueDate === nextTodo.dueDate &&
+                todo.completedAt === nextTodo.completedAt &&
+                JSON.stringify(todo.subtasks) === JSON.stringify(nextTodo.subtasks)
+            );
+        });
+
+    // Only re-render if these key props changed
+    return (
+        todosEqual &&
+        JSON.stringify(prevProps.sortConfig) === JSON.stringify(nextProps.sortConfig)
+    );
 });
 
 TodoTable.displayName = 'TodoTable';

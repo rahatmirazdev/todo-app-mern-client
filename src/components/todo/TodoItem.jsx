@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
+import { useTodo } from '../../context/TodoContext';
 import toast from 'react-hot-toast';
 import ExpandButton from './common/ExpandButton';
 import StatusDropdown from './status/StatusDropdown';
@@ -19,13 +20,16 @@ const TodoItem = ({
     onEdit,
     onViewHistory,
     onViewSeries,
-    isLoading,
     searchHighlight,
     onToggleSubtask,
     allTodos,
     canCompleteTodo
 }) => {
     const [showDetails, setShowDetails] = useState(false);
+    const { todoLoadingStates } = useTodo();
+
+    // Get loading state for this specific todo
+    const isLoading = todoLoadingStates[todo._id];
 
     // Calculate subtask completion percentage
     const getSubtaskProgress = () => {
@@ -174,7 +178,6 @@ const TodoItem = ({
                         onDelete={onDelete}
                         onViewHistory={onViewHistory}
                         onViewSeries={onViewSeries}
-                        isLoading={isLoading}
                     />
                 )}
             </td>
@@ -182,4 +185,18 @@ const TodoItem = ({
     );
 };
 
-export default TodoItem;
+// Memoize the component to prevent unnecessary re-renders
+export default memo(TodoItem, (prevProps, nextProps) => {
+    // Only re-render if these props changed
+    return (
+        prevProps.todo._id === nextProps.todo._id &&
+        prevProps.todo.status === nextProps.todo.status &&
+        prevProps.todo.title === nextProps.todo.title &&
+        prevProps.todo.description === nextProps.todo.description &&
+        prevProps.todo.priority === nextProps.todo.priority &&
+        prevProps.todo.dueDate === nextProps.todo.dueDate &&
+        prevProps.todo.completedAt === nextProps.todo.completedAt &&
+        JSON.stringify(prevProps.todo.subtasks) === JSON.stringify(nextProps.todo.subtasks) &&
+        prevProps.isLoading === nextProps.isLoading
+    );
+});

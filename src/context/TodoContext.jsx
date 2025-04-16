@@ -33,6 +33,7 @@ export const TodoProvider = ({ children }) => {
         secondaryDirection: 'asc'
     });
     const [allTodos, setAllTodos] = useState([]); // For dependency selection
+    const [todoLoadingStates, setTodoLoadingStates] = useState({}); // For tracking loading states of individual todos
 
     const { user } = useAuth();
 
@@ -161,27 +162,40 @@ export const TodoProvider = ({ children }) => {
 
     // Delete a todo
     const deleteTodo = useCallback(async (id) => {
-        setLoading(true);
-        setError(null);
+        // Set loading state just for this specific todo
+        setTodoLoadingStates(prev => ({ ...prev, [id]: true }));
+
+        // Store the original todo for potential rollback
+        const originalTodo = todos.find(todo => todo._id === id);
+
+        // Optimistically remove from UI
+        setTodos(prevTodos => prevTodos.filter(todo => todo._id !== id));
 
         try {
             await axiosPrivate.delete(`/todos/${id}`);
-
-            // Remove todo from the list
-            setTodos(todos.filter(todo => todo._id !== id));
+            // Already removed from state - nothing more to do
         } catch (err) {
-            setError(err.message || 'Failed to delete todo');
+            // Restore the todo on error
+            if (originalTodo) {
+                setTodos(prevTodos => [...prevTodos, originalTodo]);
+            }
             console.error('Error deleting todo:', err);
             throw err;
-        } finally {
-            setLoading(false);
         }
-    }, [todos]);
+    }, [todos, axiosPrivate]);
 
-    // Update todo status with recurring task support
+    // Update todo status with recurring task support and optimistic updates
     const updateTodoStatus = useCallback(async (id, status, comment = '') => {
-        setLoading(true);
-        setError(null);
+        // Set loading state just for this specific todo
+        setTodoLoadingStates(prev => ({ ...prev, [id]: true }));
+
+        // Store the original todo for rollback in case of error
+        const originalTodo = todos.find(todo => todo._id === id);
+
+        // Optimistically update the UI
+        setTodos(prevTodos => prevTodos.map(todo =>
+            todo._id === id ? { ...todo, status, updatingStatus: true } : todo
+        ));
 
         try {
             const response = await axiosPrivate.patch(`/todos/${id}/status`, {
@@ -206,7 +220,7 @@ export const TodoProvider = ({ children }) => {
                 return response.data.updatedTodo;
             } else {
                 // Update todo in the list (no recurring)
-                setTodos(todos.map(todo =>
+                setTodos(prevTodos => prevTodos.map(todo =>
                     todo._id === id ? response.data : todo
                 ));
 
@@ -228,11 +242,16 @@ export const TodoProvider = ({ children }) => {
                 return response.data;
             }
         } catch (err) {
-            setError(err.message || 'Failed to update todo status');
+            // Revert to original state on error
+            setTodos(prevTodos => prevTodos.map(todo =>
+                todo._id === id ? originalTodo : todo
+            ));
+
             console.error('Error updating todo status:', err);
             throw err;
         } finally {
-            setLoading(false);
+            // Clear loading state for just this todo
+            setTodoLoadingStates(prev => ({ ...prev, [id]: false }));
         }
     }, [todos, axiosPrivate, showTaskUpdate]);
 
@@ -255,45 +274,56 @@ export const TodoProvider = ({ children }) => {
         }
     }, [axiosPrivate]);
 
-    // Toggle subtask completion
+    // Toggle subtask with optimistic update
     const toggleSubtask = useCallback(async (todoId, subtaskIndex) => {
-        setLoading(true);
-        setError(null);
+        // Set loading state just for this specific todo
+        setTodoLoadingStates(prev => ({ ...prev, [todoId]: true }));
+
+        // Find the todo to update
+        const todoToUpdate = todos.find(todo => todo._id === todoId);
+        if (!todoToUpdate) {
+            throw new Error('Todo not found');
+        }
+
+        // Create a deep copy of the todo's subtasks
+        const updatedSubtasks = JSON.parse(JSON.stringify(todoToUpdate.subtasks));
+
+        // Toggle the completion status
+        updatedSubtasks[subtaskIndex].completed = !updatedSubtasks[subtaskIndex].completed;
+
+        // Set the completedAt timestamp
+        updatedSubtasks[subtaskIndex].completedAt = updatedSubtasks[subtaskIndex].completed
+            ? new Date().toISOString()
+            : null;
+
+        // Optimistically update the UI
+        setTodos(prevTodos => prevTodos.map(todo =>
+            todo._id === todoId ? { ...todo, subtasks: updatedSubtasks } : todo
+        ));
 
         try {
-            const todoToUpdate = todos.find(todo => todo._id === todoId);
-            if (!todoToUpdate) {
-                throw new Error('Todo not found');
-            }
-
-            // Create a deep copy of the todo's subtasks
-            const updatedSubtasks = JSON.parse(JSON.stringify(todoToUpdate.subtasks));
-
-            // Toggle the completion status
-            updatedSubtasks[subtaskIndex].completed = !updatedSubtasks[subtaskIndex].completed;
-
-            // Set the completedAt timestamp
-            updatedSubtasks[subtaskIndex].completedAt = updatedSubtasks[subtaskIndex].completed
-                ? new Date().toISOString()
-                : null;
-
             // Send update to the server
             const response = await axiosPrivate.put(`/todos/${todoId}`, {
                 subtasks: updatedSubtasks
             });
 
-            // Update todo in the local state
-            setTodos(todos.map(todo =>
+            // Update todo in the local state with the server response
+            setTodos(prevTodos => prevTodos.map(todo =>
                 todo._id === todoId ? response.data : todo
             ));
 
             return response.data;
         } catch (err) {
-            setError(err.message || 'Failed to toggle subtask');
+            // Revert to original state on error
+            setTodos(prevTodos => prevTodos.map(todo =>
+                todo._id === todoId ? todoToUpdate : todo
+            ));
+
             console.error('Error toggling subtask:', err);
             throw err;
         } finally {
-            setLoading(false);
+            // Clear loading state for just this todo
+            setTodoLoadingStates(prev => ({ ...prev, [todoId]: false }));
         }
     }, [todos, axiosPrivate]);
 
@@ -436,7 +466,8 @@ export const TodoProvider = ({ children }) => {
         changePage,
         canCompleteTodo,
         celebration,
-        hideCelebration
+        hideCelebration,
+        todoLoadingStates // Add this to the context value
     };
 
     return (

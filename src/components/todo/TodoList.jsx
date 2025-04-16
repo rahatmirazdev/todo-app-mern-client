@@ -5,8 +5,16 @@ import toast from 'react-hot-toast';
 import RecurringSeriesModal from './RecurringSeriesModal';
 
 const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination, onPageChange, onViewHistory }) => {
-    const { updateTodoStatus, deleteTodo, toggleSubtask, allTodos, canCompleteTodo } = useTodo();
-    const [actionLoading, setActionLoading] = useState(null);
+    const {
+        updateTodoStatus,
+        deleteTodo,
+        toggleSubtask,
+        allTodos,
+        canCompleteTodo,
+        todoLoadingStates
+    } = useTodo();
+
+    // No longer need global actionLoading state
     const [statusModal, setStatusModal] = useState({ visible: false, todoId: null, currentStatus: null });
     const [seriesModal, setSeriesModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
 
@@ -23,44 +31,37 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
             return;
         }
 
-        // Otherwise update directly
-        setActionLoading(id);
+        // Otherwise update directly - no need to track loading state here
         try {
             await updateTodoStatus(id, status);
             toast.success(`Status updated to ${status.replace('_', ' ')}`);
         } catch (error) {
             toast.error('Failed to update status');
             console.error('Failed to update status:', error);
-        } finally {
-            setActionLoading(null);
         }
     };
 
     const handleStatusModalSubmit = async (comment) => {
-        setActionLoading(statusModal.todoId);
+        const { todoId, newStatus } = statusModal;
         try {
-            await updateTodoStatus(statusModal.todoId, statusModal.newStatus, comment);
-            toast.success(`Status updated to ${statusModal.newStatus.replace('_', ' ')}`);
+            await updateTodoStatus(todoId, newStatus, comment);
+            toast.success(`Status updated to ${newStatus.replace('_', ' ')}`);
         } catch (error) {
             toast.error('Failed to update status');
             console.error('Failed to update status:', error);
         } finally {
-            setActionLoading(null);
             setStatusModal({ visible: false, todoId: null, currentStatus: null });
         }
     };
 
     const handleDelete = async (id, title) => {
         if (window.confirm(`Are you sure you want to delete "${title}"?`)) {
-            setActionLoading(id);
             try {
                 await deleteTodo(id);
                 toast.success('Todo deleted successfully');
             } catch (error) {
                 toast.error('Failed to delete todo');
                 console.error('Failed to delete todo:', error);
-            } finally {
-                setActionLoading(null);
             }
         }
     };
@@ -100,17 +101,14 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
         });
     };
 
-    // Handle toggling a subtask
+    // Handle toggling a subtask - no need to track loading state here
     const handleToggleSubtask = async (todoId, subtaskIndex) => {
-        setActionLoading(todoId);
         try {
             await toggleSubtask(todoId, subtaskIndex);
             // No toast needed for subtask toggle to avoid too many notifications
         } catch (error) {
             toast.error('Failed to update subtask');
             console.error('Failed to update subtask:', error);
-        } finally {
-            setActionLoading(null);
         }
     };
 
@@ -158,7 +156,6 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
                     onEdit={onEdit}
                     onViewHistory={onViewHistory}
                     onViewSeries={handleViewSeries}
-                    actionLoading={actionLoading}
                     allTodos={allTodos}
                     canCompleteTodo={canCompleteTodo}
                     onToggleSubtask={handleToggleSubtask}
