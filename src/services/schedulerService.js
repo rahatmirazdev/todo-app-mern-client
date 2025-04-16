@@ -25,16 +25,6 @@ const schedulerService = {
     },
 
     /**
-     * Mark a task as started to begin tracking time
-     * @param {string} taskId - The task ID
-     * @returns {Promise<Object>} - The updated task
-     */
-    startTask: async (taskId) => {
-        const response = await axiosPrivate.patch(`/scheduler/start-task/${taskId}`);
-        return response.data;
-    },
-
-    /**
      * Format time of day for display
      * @param {string} timeOfDay - Time of day value (morning, afternoon, evening)
      * @returns {string} - Formatted display string

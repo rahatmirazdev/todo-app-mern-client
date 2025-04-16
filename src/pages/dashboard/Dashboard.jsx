@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Link, Routes, Route, Navigate } from 'react-router-dom';
+import { Link, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import axiosPrivate from '../../services/api/axiosPrivate';
 import TodoSummaryWidget from '../../components/dashboard/TodoSummaryWidget';
 import { useNotification } from '../../context/NotificationContext';
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [todoCounts, setTodoCounts] = useState({ total: 0, active: 0, completed: 0 });
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
 
   // Safely access the notification context
   const notificationContext = useNotification();
@@ -130,16 +131,13 @@ const Dashboard = () => {
     </div>
   );
 
-  return (
-    <Routes>
-      <Route index element={<DashboardOverview />} />
-      <Route path="todos" element={<Todo />} />
-      <Route path="analytics" element={<Analytics />} />
-      <Route path="calendar" element={<Calendar />} />
-      <Route path="settings" element={<Settings />} />
-      <Route path="*" element={<Navigate to="/dashboard/todos" replace />} />
-    </Routes>
-  );
+  // Check if we're at the main dashboard route
+  if (location.pathname === '/dashboard') {
+    return <DashboardOverview />;
+  }
+
+  // Otherwise, render the child routes via Outlet
+  return <Outlet />;
 };
 
 export default Dashboard;

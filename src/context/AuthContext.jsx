@@ -32,9 +32,12 @@ export const AuthProvider = ({ children }) => {
                                 handleInvalidToken();
                             }
                         } catch (validationError) {
-                            // Handle token validation error (401, etc)
                             console.warn('Token validation error:', validationError);
-                            handleInvalidToken();
+                            // Prevent repeated validation attempts on 401 errors by setting tokenValidated
+                            if (validationError.response && validationError.response.status === 401) {
+                                setTokenValidated(true); // Prevent further validation attempts
+                                handleInvalidToken();
+                            }
                         }
                     } else {
                         // Token was already validated, just use stored user
