@@ -2,12 +2,12 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import { Outlet, useLocation, Link } from 'react-router-dom';
 import Sidebar from '../../components/dashboard/Sidebar';
 import { useAuth } from '../../context/AuthContext';
+import { useTodo } from '../../context/TodoContext';
 import ThemeToggle from '../../components/shared/ThemeToggle';
 import { Toaster } from 'react-hot-toast';
 import { useTheme } from '../../context/ThemeContext';
-
-// Import the notification context directly
 import { useNotification } from '../../context/NotificationContext';
+import TaskCompletionCelebration from '../../components/celebrations/TaskCompletionCelebration';
 
 const DashboardLayout = () => {
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -72,6 +72,10 @@ const DashboardLayout = () => {
     const toggleSidebar = () => {
         setSidebarExpanded(!sidebarExpanded);
     };
+
+    // Get celebration state from todo context
+    const todoContext = useTodo();
+    const { celebration, hideCelebration } = todoContext || {};
 
     return (
         <div className={`${isAnalyticsPage ? '' : 'h-screen overflow-hidden'} bg-gray-50 dark:bg-gray-900`}>
@@ -233,6 +237,15 @@ const DashboardLayout = () => {
                 <main className="flex-1 overflow-auto p-4 md:p-6">
                     <Outlet />
                 </main>
+
+                {/* Task Completion Celebration */}
+                {celebration && celebration.isVisible && celebration.message && (
+                    <TaskCompletionCelebration 
+                        isVisible={celebration.isVisible}
+                        message={celebration.message}
+                        onClose={hideCelebration}
+                    />
+                )}
             </div>
         </div>
     );

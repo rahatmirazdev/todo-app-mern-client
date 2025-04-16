@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useCallback } from 'rea
 import axiosPrivate from '../services/api/axiosPrivate';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
+import { generateCelebrationMessage } from '../services/celebrationService';
 
 const TodoContext = createContext();
 
@@ -39,6 +40,13 @@ export const TodoProvider = ({ children }) => {
     const showTaskUpdate = useCallback((message, todoId) => {
         toast.success(message);
     }, []);
+
+    // Add celebration state
+    const [celebration, setCelebration] = useState({
+        isVisible: false,
+        message: null,
+        task: null
+    });
 
     // Fetch todos with filters, sorting, and pagination
     const fetchTodos = useCallback(async () => {
@@ -205,6 +213,14 @@ export const TodoProvider = ({ children }) => {
                 // Show notification about status change
                 if (status === 'completed') {
                     showTaskUpdate('Task marked as completed', id);
+                    
+                    // Show celebration when task is completed
+                    const celebrationMessage = generateCelebrationMessage(response.data);
+                    setCelebration({
+                        isVisible: true,
+                        message: celebrationMessage,
+                        task: response.data
+                    });
                 } else if (status === 'in_progress') {
                     showTaskUpdate('Task moved to in progress', id);
                 }
@@ -389,6 +405,15 @@ export const TodoProvider = ({ children }) => {
         }
     }, [user, fetchAllTodos]);
 
+    // Function to hide celebration
+    const hideCelebration = useCallback(() => {
+        setCelebration({
+            isVisible: false,
+            message: null,
+            task: null
+        });
+    }, []);
+
     // Context value
     const value = {
         todos,
@@ -409,7 +434,9 @@ export const TodoProvider = ({ children }) => {
         updateFilters,
         updateSortConfig,
         changePage,
-        canCompleteTodo
+        canCompleteTodo,
+        celebration,
+        hideCelebration
     };
 
     return (
