@@ -11,6 +11,11 @@ import ModalActions from './modal/ModalActions';
 import axiosPrivate from '../../services/api/axiosPrivate';
 import { getSubtaskSuggestions, shouldShowSubtaskSuggestions } from '../../services/subtaskSuggestionService';
 import { toast } from 'react-hot-toast';
+import DurationEstimateField from './modal/DurationEstimateField';
+import OptimalTimeField from './scheduling/OptimalTimeField';
+import TaskTypeField from './scheduling/TaskTypeField';
+import TimeRecommendations from './scheduling/TimeRecommendations';
+import schedulerService from '../../services/schedulerService';
 
 const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, onError }) => {
     const { createTodo, updateTodo, allTodos, fetchAllTodos } = useTodo();
@@ -28,7 +33,12 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
         recurringPattern: 'daily',
         recurringEndDate: '',
         subtasks: [],
-        dependencies: []
+        dependencies: [],
+        // Add new scheduling fields
+        estimatedDuration: 30,
+        optimalTimeOfDay: 'any',
+        taskType: 'general',
+        scheduledTime: null
     });
     const [newTag, setNewTag] = useState('');
     const [newSubtask, setNewSubtask] = useState('');
@@ -59,7 +69,11 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                 recurringPattern: todo.recurringPattern || 'daily',
                 recurringEndDate: formattedRecurringEndDate,
                 subtasks: todo.subtasks || [],
-                dependencies: todo.dependencies || []
+                dependencies: todo.dependencies || [],
+                estimatedDuration: todo.estimatedDuration || 30,
+                optimalTimeOfDay: todo.optimalTimeOfDay || 'any',
+                taskType: todo.taskType || 'general',
+                scheduledTime: todo.scheduledTime || null
             });
         }
     }, [mode, todo]);
@@ -241,6 +255,26 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
         setSubtaskSuggestions([]);
     };
 
+    // New function to handle scheduling a task
+    const handleScheduleTask = async (scheduledTime) => {
+        try {
+            if (mode === 'edit' && todo?._id) {
+                const updatedTask = await schedulerService.scheduleTask(todo._id, scheduledTime);
+
+                // Update the form data
+                setFormData(prev => ({
+                    ...prev,
+                    scheduledTime: updatedTask.scheduledTime
+                }));
+
+                toast.success('Task scheduled successfully');
+            }
+        } catch (error) {
+            console.error('Error scheduling task:', error);
+            toast.error('Failed to schedule task');
+        }
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -352,6 +386,56 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                                         handleRemoveSubtask={handleRemoveSubtask}
                                         handleToggleSubtask={handleToggleSubtask}
                                     />
+                                    <div className="mt-4 border-t dark:border-gray-700 pt-4">
+                                        <h3 className="text-base font-medium text-gray-900 dark:text-white mb-3">
+                                            Task Scheduling
+                                        </h3>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div>
+                                                <DurationEstimateField
+                                                    value={formData.estimatedDuration}
+                                                    onChange={handleChange}
+                                                />
+
+                                                <OptimalTimeField
+                                                    value={formData.optimalTimeOfDay}
+                                                    onChange={handleChange}
+                                                />
+
+                                                <TaskTypeField
+                                                    value={formData.taskType}
+                                                    onChange={handleChange}
+                                                />
+                                            </div>
+
+                                            <div>
+                                                {mode === 'edit' && todo?._id && (
+                                                    <TimeRecommendations
+                                                        todoId={todo._id}
+                                                        onSchedule={handleScheduleTask}
+                                                    />
+                                                )}
+
+                                                {formData.scheduledTime && (
+                                                    <div className="mt-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-md">
+                                                        <h3 className="text-sm font-medium text-green-700 dark:text-green-300 mb-2">
+                                                            <span role="img" aria-label="calendar">📅</span> Scheduled Time
+                                                        </h3>
+                                                        <div className="text-sm text-gray-800 dark:text-gray-200">
+                                                            {new Date(formData.scheduledTime).toLocaleString(undefined, {
+                                                                weekday: 'long',
+                                                                month: 'long',
+                                                                day: 'numeric',
+                                                                hour: '2-digit',
+                                                                minute: '2-digit'
+                                                            })}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
                                     <ModalActions mode={mode} loading={loading} onClose={onClose} />
                                 </form>
                             </div>

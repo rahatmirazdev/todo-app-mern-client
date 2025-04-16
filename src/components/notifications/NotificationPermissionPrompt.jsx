@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNotification } from '../../context/NotificationContext';
 
 const NotificationPermissionPrompt = () => {
     const { permissionState, requestPermission } = useNotification();
+    const [dismissed, setDismissed] = useState(false);
 
     // Only show the prompt if permission hasn't been granted or denied yet
-    if (permissionState !== 'default') {
+    // and it hasn't been dismissed
+    if (permissionState !== 'default' || dismissed) {
         return null;
     }
 
     const handleRequestPermission = async () => {
         await requestPermission();
+    };
+
+    const handleDismiss = () => {
+        setDismissed(true);
     };
 
     return (
@@ -21,7 +27,7 @@ const NotificationPermissionPrompt = () => {
             </p>
             <div className="flex justify-end space-x-3">
                 <button
-                    onClick={() => document.body.removeChild(document.getElementById('notification-prompt'))}
+                    onClick={handleDismiss}
                     className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
                 >
                     Not Now

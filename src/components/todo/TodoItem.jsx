@@ -61,6 +61,48 @@ const TodoItem = ({
                         onClick={() => setShowDetails(!showDetails)}
                     />
                     <div>
+                        <div className="flex items-center mb-1">
+                            <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                                {searchHighlight ? highlightText(todo.title, searchHighlight) : todo.title}
+                            </h3>
+                        </div>
+
+                        {/* Add scheduled time badge */}
+                        {todo.scheduledTime && (
+                            <div className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 mr-2 mb-1">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Scheduled: {new Date(todo.scheduledTime).toLocaleString(undefined, {
+                                    weekday: 'short',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                })}
+                            </div>
+                        )}
+
+                        {/* Badges row */}
+                        <div className="flex flex-wrap items-center text-sm text-gray-500 dark:text-gray-400">
+                            <TodoBadges todo={todo} subtaskProgress={subtaskProgress} />
+
+                            {/* Task duration */}
+                            {todo.estimatedDuration && (
+                                <span className="inline-flex items-center mr-2 text-xs text-gray-500 dark:text-gray-400">
+                                    <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {todo.estimatedDuration >= 60
+                                        ? `${Math.floor(todo.estimatedDuration / 60)}h ${todo.estimatedDuration % 60 > 0 ? `${todo.estimatedDuration % 60}m` : ''}`
+                                        : `${todo.estimatedDuration}m`
+                                    }
+                                </span>
+                            )}
+
+                            <DependencyBadge todo={todo} allTodos={allTodos} />
+                        </div>
+
                         {/* Render badges only if allTodos is available */}
                         <div className="font-medium text-gray-900 dark:text-white flex items-center">
                             {searchHighlight ? highlightText(todo.title, searchHighlight) : todo.title}
