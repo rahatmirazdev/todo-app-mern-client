@@ -1,16 +1,34 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import notificationService from '../services/NotificationService';
-import { useTodo } from './TodoContext';
 
-const NotificationContext = createContext();
+// Create context with default values
+const NotificationContext = createContext({
+    notificationsEnabled: false,
+    desktopNotificationsEnabled: false,
+    browserNotificationsEnabled: false,
+    permissionState: 'default',
+    notifications: [],
+    requestPermission: () => Promise.resolve('default'),
+    toggleNotifications: () => { },
+    toggleDesktopNotifications: () => { },
+    toggleBrowserNotifications: () => { },
+    showTaskReminder: () => null,
+    showTaskUpdate: () => null,
+    markAsRead: () => { },
+    clearAll: () => { }
+});
 
 export const useNotification = () => useContext(NotificationContext);
 
 export const NotificationProvider = ({ children }) => {
     const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+    const [desktopNotificationsEnabled, setDesktopNotificationsEnabled] = useState(false);
+    const [browserNotificationsEnabled, setBrowserNotificationsEnabled] = useState(false);
     const [permissionState, setPermissionState] = useState('default');
-    const { todos } = useTodo();
+    const [notifications, setNotifications] = useState([]);
+
+    // We can safely use useNavigate() now that NotificationProvider is inside Router
     const navigate = useNavigate();
 
     // Check permission state on mount
@@ -18,7 +36,9 @@ export const NotificationProvider = ({ children }) => {
         const isSupported = notificationService.checkSupport();
         if (isSupported) {
             setPermissionState(Notification.permission);
-            setNotificationsEnabled(Notification.permission === 'granted');
+            const isGranted = Notification.permission === 'granted';
+            setNotificationsEnabled(isGranted);
+            setBrowserNotificationsEnabled(isGranted);
         }
     }, []);
 
@@ -27,74 +47,82 @@ export const NotificationProvider = ({ children }) => {
         const permission = await notificationService.requestPermission();
         setPermissionState(permission);
         setNotificationsEnabled(permission === 'granted');
+        setBrowserNotificationsEnabled(permission === 'granted');
         return permission;
     }, []);
 
+    // Toggle all notifications
+    const toggleNotifications = useCallback(() => {
+        if (!notificationsEnabled && permissionState !== 'granted') {
+            requestPermission();
+        } else {
+            setNotificationsEnabled(!notificationsEnabled);
+            if (!notificationsEnabled) {
+                // Enable sub-settings when enabling all
+                setDesktopNotificationsEnabled(true);
+                setBrowserNotificationsEnabled(true);
+            }
+        }
+    }, [notificationsEnabled, permissionState, requestPermission]);
+
+    // Toggle desktop notifications (in-app)
+    const toggleDesktopNotifications = useCallback(() => {
+        setDesktopNotificationsEnabled(!desktopNotificationsEnabled);
+    }, [desktopNotificationsEnabled]);
+
+    // Toggle browser notifications
+    const toggleBrowserNotifications = useCallback(() => {
+        if (!browserNotificationsEnabled && permissionState !== 'granted') {
+            requestPermission();
+        } else {
+            setBrowserNotificationsEnabled(!browserNotificationsEnabled);
+        }
+    }, [browserNotificationsEnabled, permissionState, requestPermission]);
+
     // Show a task reminder notification
     const showTaskReminder = useCallback((todo) => {
-        if (!notificationsEnabled) return null;
+        if (!notificationsEnabled || !browserNotificationsEnabled) return null;
 
         return notificationService.showTaskReminder(todo, () => {
             navigate(`/dashboard/todos?id=${todo._id}`);
         });
-    }, [navigate, notificationsEnabled]);
+    }, [navigate, notificationsEnabled, browserNotificationsEnabled]);
 
     // Show a task update notification
     const showTaskUpdate = useCallback((message, todoId) => {
-        if (!notificationsEnabled) return null;
+        if (!notificationsEnabled || !browserNotificationsEnabled) return null;
 
         return notificationService.showTaskUpdate(message, todoId, () => {
             navigate(`/dashboard/todos?id=${todoId}`);
         });
-    }, [navigate, notificationsEnabled]);
+    }, [navigate, notificationsEnabled, browserNotificationsEnabled]);
 
-    // Check for due tasks and send reminders
-    useEffect(() => {
-        if (!notificationsEnabled || !todos.length) return;
+    // Mock functions for notification management
+    const markAsRead = useCallback((id) => {
+        setNotifications(prev =>
+            prev.map(n => n.id === id ? { ...n, read: true } : n)
+        );
+    }, []);
 
-        // Check for tasks due today
-        const now = new Date();
-        now.setHours(0, 0, 0, 0);
-
-        const todayStr = now.toISOString().split('T')[0];
-
-        const dueTasks = todos.filter(todo => {
-            if (!todo.dueDate || todo.status === 'completed') return false;
-
-            const dueDate = new Date(todo.dueDate);
-            dueDate.setHours(0, 0, 0, 0);
-
-            const dueDateStr = dueDate.toISOString().split('T')[0];
-            return dueDateStr === todayStr;
-        });
-
-        // Send notifications for tasks due today that haven't been notified yet
-        if (dueTasks.length > 0) {
-            // Use localStorage to track which tasks we've already sent notifications for
-            const notifiedTasks = JSON.parse(localStorage.getItem('notifiedTasks') || '{}');
-            const today = new Date().toISOString().split('T')[0];
-
-            dueTasks.forEach(task => {
-                // Check if we've already notified for this task today
-                if (!notifiedTasks[task._id] || notifiedTasks[task._id] !== today) {
-                    showTaskReminder(task);
-
-                    // Mark as notified
-                    notifiedTasks[task._id] = today;
-                }
-            });
-
-            localStorage.setItem('notifiedTasks', JSON.stringify(notifiedTasks));
-        }
-    }, [todos, notificationsEnabled, showTaskReminder]);
+    const clearAll = useCallback(() => {
+        setNotifications([]);
+    }, []);
 
     // Value to be provided to consumers
     const value = {
         notificationsEnabled,
+        desktopNotificationsEnabled,
+        browserNotificationsEnabled,
         permissionState,
+        notifications,
         requestPermission,
+        toggleNotifications,
+        toggleDesktopNotifications,
+        toggleBrowserNotifications,
         showTaskReminder,
-        showTaskUpdate
+        showTaskUpdate,
+        markAsRead,
+        clearAll
     };
 
     return (

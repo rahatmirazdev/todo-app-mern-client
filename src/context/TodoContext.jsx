@@ -3,14 +3,6 @@ import axiosPrivate from '../services/api/axiosPrivate';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
-// Import useNotification conditionally to prevent circular dependencies
-let useNotification;
-try {
-    useNotification = require('./NotificationContext').useNotification;
-} catch (error) {
-    useNotification = () => null;
-}
-
 const TodoContext = createContext();
 
 export const TodoProvider = ({ children }) => {
@@ -43,9 +35,10 @@ export const TodoProvider = ({ children }) => {
 
     const { user } = useAuth();
 
-    // Safely access the notification context if available
-    const notificationContext = useNotification ? useNotification() : null;
-    const showTaskUpdate = notificationContext?.showTaskUpdate || (() => { });
+    // Direct toast function without dependency on NotificationContext
+    const showTaskUpdate = useCallback((message, todoId) => {
+        toast.success(message);
+    }, []);
 
     // Fetch todos with filters, sorting, and pagination
     const fetchTodos = useCallback(async () => {

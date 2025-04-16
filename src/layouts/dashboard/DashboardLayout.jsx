@@ -6,14 +6,8 @@ import ThemeToggle from '../../components/shared/ThemeToggle';
 import { Toaster } from 'react-hot-toast';
 import { useTheme } from '../../context/ThemeContext';
 
-// Import the context directly at the top level - no dynamic imports
-// If the import fails, default to null
-let NotificationContext = null;
-try {
-    NotificationContext = require('../../context/NotificationContext');
-} catch (error) {
-    console.warn('NotificationContext not available:', error);
-}
+// Import the notification context directly
+import { useNotification } from '../../context/NotificationContext';
 
 const DashboardLayout = () => {
     const [sidebarExpanded, setSidebarExpanded] = useState(true);
@@ -24,8 +18,8 @@ const DashboardLayout = () => {
     const location = useLocation();
     const notificationRef = useRef(null);
 
-    // Safely access notification context - always call the hook if available
-    const notificationContext = NotificationContext ? NotificationContext.useNotification() : null;
+    // Get notification context
+    const notificationContext = useNotification();
 
     // Provide fallback functions if context is not available
     const notifications = notificationContext?.notifications || [];
@@ -73,7 +67,7 @@ const DashboardLayout = () => {
 
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
-    }, []);
+    }, [sidebarExpanded]);
 
     const toggleSidebar = () => {
         setSidebarExpanded(!sidebarExpanded);

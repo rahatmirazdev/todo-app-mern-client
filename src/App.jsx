@@ -11,23 +11,23 @@ import Spinner from './components/Spinner';
 
 function App() {
     return (
-        <AuthProvider>
-            <ThemeProvider>
-                <NotificationProvider>
+        <Router>
+            <AuthProvider>
+                <ThemeProvider>
                     <TodoProvider>
-                        <Suspense fallback={<Spinner />}>
-                            <Router>
+                        <NotificationProvider>
+                            <Suspense fallback={<Spinner />}>
                                 <Routes>
                                     <Route path="/" element={<Home />} />
                                     <Route path="/dashboard/*" element={<Dashboard />} />
                                     <Route path="/dashboard/search" element={<Search />} />
                                 </Routes>
-                            </Router>
-                        </Suspense>
+                            </Suspense>
+                        </NotificationProvider>
                     </TodoProvider>
-                </NotificationProvider>
-            </ThemeProvider>
-        </AuthProvider>
+                </ThemeProvider>
+            </AuthProvider>
+        </Router>
     );
 }
 

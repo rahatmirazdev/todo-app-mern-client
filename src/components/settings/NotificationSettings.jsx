@@ -1,20 +1,15 @@
 import React from 'react';
 
 // Import the context directly at the top level - no dynamic imports
-// If the import fails, default to null
-let NotificationContext = null;
-try {
-    NotificationContext = require('../../context/NotificationContext');
-} catch (error) {
-    console.warn('NotificationContext not available:', error);
-}
+import { useNotification } from '../../context/NotificationContext';
 
 const NotificationSettings = () => {
-    // Call the hook consistently at the top level if it exists
-    const notificationContext = NotificationContext ? NotificationContext.useNotification() : null;
+    // Call the hook directly
+    const notificationContext = useNotification();
 
     // If notification context is not available, show a message
-    if (!notificationContext) {
+    if (!notificationContext ||
+        typeof notificationContext.notificationsEnabled === 'undefined') {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
                 <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">Notification Settings</h2>
