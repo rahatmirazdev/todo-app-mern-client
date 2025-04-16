@@ -213,7 +213,7 @@ export const TodoProvider = ({ children }) => {
                 // Show notification about status change
                 if (status === 'completed') {
                     showTaskUpdate('Task marked as completed', id);
-                    
+
                     // Show celebration when task is completed
                     const celebrationMessage = generateCelebrationMessage(response.data);
                     setCelebration({

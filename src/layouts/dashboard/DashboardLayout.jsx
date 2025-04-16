@@ -240,7 +240,7 @@ const DashboardLayout = () => {
 
                 {/* Task Completion Celebration */}
                 {celebration && celebration.isVisible && celebration.message && (
-                    <TaskCompletionCelebration 
+                    <TaskCompletionCelebration
                         isVisible={celebration.isVisible}
                         message={celebration.message}
                         onClose={hideCelebration}
