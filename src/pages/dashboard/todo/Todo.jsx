@@ -7,6 +7,7 @@ import TodoModal from '../../../components/todo/TodoModal';
 import KanbanBoard from '../../../components/todo/KanbanBoard';
 import StatusHistoryModal from '../../../components/todo/StatusHistoryModal';
 import toast from 'react-hot-toast';
+import axiosPrivate from '../../../services/api/axiosPrivate';
 
 const Todo = () => {
     const {
@@ -25,10 +26,11 @@ const Todo = () => {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTodo, setEditingTodo] = useState(null);
     const [initialLoad, setInitialLoad] = useState(true);
-    const [viewMode, setViewMode] = useState('list'); // 'list' or 'kanban'
+    const [viewMode, setViewMode] = useState('list'); // Default
     const [historyModal, setHistoryModal] = useState({ isOpen: false, todoId: null, todoTitle: '' });
     const autoFocusSearch = useRef(true);
     const [shouldFocusSearch, setShouldFocusSearch] = useState(true);
+    const [loadingPreferences, setLoadingPreferences] = useState(true);
 
     // Apply URL parameters as filters and focus search box on initial load
     useEffect(() => {
@@ -77,6 +79,37 @@ const Todo = () => {
             });
         }
     }, [fetchTodos, initialLoad, searchParams, updateFilters]);
+
+    // Fetch user preferences on mount
+    useEffect(() => {
+        const fetchPreferences = async () => {
+            try {
+                const response = await axiosPrivate.get('/users/preferences');
+
+                if (response.data && response.data.taskDefaults && response.data.taskDefaults.defaultView) {
+                    setViewMode(response.data.taskDefaults.defaultView);
+                } else {
+                    // Fall back to localStorage if no preferences from server
+                    const savedView = localStorage.getItem('taskDefaultView');
+                    if (savedView) {
+                        setViewMode(savedView);
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching preferences:', err);
+
+                // Fall back to localStorage
+                const savedView = localStorage.getItem('taskDefaultView');
+                if (savedView) {
+                    setViewMode(savedView);
+                }
+            } finally {
+                setLoadingPreferences(false);
+            }
+        };
+
+        fetchPreferences();
+    }, []);
 
     // Reset focus flag when this component unmounts and remounts
     useEffect(() => {
@@ -177,22 +210,37 @@ const Todo = () => {
             )}
 
             {/* View Switcher */}
-            {viewMode === 'list' ? (
-                <TodoList
-                    todos={todos}
-                    loading={loading || initialLoad}
-                    sortConfig={sortConfig}
-                    onSortChange={updateSortConfig}
-                    onEdit={handleEditTodo}
-                    onViewHistory={handleViewHistory}
-                    pagination={pagination}
-                    onPageChange={changePage}
-                />
-            ) : (
-                <KanbanBoard
-                    todos={todos}
-                    onEdit={handleEditTodo}
-                />
+            {!loadingPreferences && (
+                <>
+                    {/* View toggle button */}
+                    <div className="mb-4">
+                        <button
+                            onClick={() => setViewMode(viewMode === 'list' ? 'kanban' : 'list')}
+                            className="px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 rounded-md text-sm font-medium hover:bg-indigo-200 dark:hover:bg-indigo-900/50 transition-colors"
+                        >
+                            {viewMode === 'list' ? 'Switch to Kanban View' : 'Switch to List View'}
+                        </button>
+                    </div>
+
+                    {/* View content */}
+                    {viewMode === 'list' ? (
+                        <TodoList
+                            todos={todos}
+                            loading={loading || initialLoad}
+                            sortConfig={sortConfig}
+                            onSortChange={updateSortConfig}
+                            onEdit={handleEditTodo}
+                            onViewHistory={handleViewHistory}
+                            pagination={pagination}
+                            onPageChange={changePage}
+                        />
+                    ) : (
+                        <KanbanBoard
+                            todos={todos}
+                            onEdit={handleEditTodo}
+                        />
+                    )}
+                </>
             )}
 
             {/* Create Todo Modal */}

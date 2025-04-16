@@ -8,6 +8,7 @@ import RecurringOptions from './modal/RecurringOptions';
 import SubtaskManager from './modal/SubtaskManager';
 import DependencySelector from './modal/DependencySelector';
 import ModalActions from './modal/ModalActions';
+import axiosPrivate from '../../services/api/axiosPrivate';
 
 const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, onError }) => {
     const { createTodo, updateTodo, allTodos, fetchAllTodos } = useTodo();
@@ -17,9 +18,9 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
         title: '',
         description: '',
         status: 'todo',
-        priority: 'medium',
+        priority: 'medium', // Will be overridden by user preferences
         dueDate: '',
-        category: 'general',
+        category: 'general', // Will be overridden by user preferences
         tags: [],
         isRecurring: false,
         recurringPattern: 'daily',
@@ -29,6 +30,7 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
     });
     const [newTag, setNewTag] = useState('');
     const [newSubtask, setNewSubtask] = useState('');
+    const [loadingPreferences, setLoadingPreferences] = useState(true);
 
     // Ensure we have the latest list of todos for dependency selection
     useEffect(() => {
@@ -57,6 +59,46 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
             });
         }
     }, [mode, todo]);
+
+    useEffect(() => {
+        const fetchPreferences = async () => {
+            // Only fetch preferences for new tasks
+            if (mode !== 'create') {
+                setLoadingPreferences(false);
+                return;
+            }
+
+            try {
+                setLoadingPreferences(true);
+                const response = await axiosPrivate.get('/users/preferences');
+
+                if (response.data && response.data.taskDefaults) {
+                    const taskDefaults = response.data.taskDefaults;
+
+                    // Only update the form for new tasks
+                    setFormData(prev => ({
+                        ...prev,
+                        priority: taskDefaults.defaultPriority || prev.priority,
+                        category: taskDefaults.defaultCategory || prev.category,
+                        // Don't set status here as it's usually "todo" for new tasks
+                    }));
+                }
+            } catch (err) {
+                console.error('Error fetching preferences:', err);
+
+                // Fall back to localStorage
+                setFormData(prev => ({
+                    ...prev,
+                    priority: localStorage.getItem('taskDefaultPriority') || prev.priority,
+                    category: localStorage.getItem('taskDefaultCategory') || prev.category,
+                }));
+            } finally {
+                setLoadingPreferences(false);
+            }
+        };
+
+        fetchPreferences();
+    }, [mode]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -169,6 +211,11 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                                 )}
 
                                 <form onSubmit={handleSubmit} className="mt-4">
+                                    {loadingPreferences && mode === 'create' && (
+                                        <div className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                                            Loading your preferences...
+                                        </div>
+                                    )}
                                     <BasicInfo formData={formData} handleChange={handleChange} />
                                     <StatusPrioritySelector formData={formData} handleChange={handleChange} />
                                     <DateCategory formData={formData} handleChange={handleChange} />
