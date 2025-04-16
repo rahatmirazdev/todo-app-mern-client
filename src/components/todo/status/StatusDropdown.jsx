@@ -19,7 +19,7 @@ const StatusDropdown = ({ status, onStatusChange, todoId, isLoading, disableComp
         <select
             value={status}
             onChange={(e) => onStatusChange(todoId, e.target.value)}
-            className={`text-xs px-2 py-1 rounded ${getStatusClass(status)} border-0 outline-none ${isLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+            className={`text-xs px-2 py-1 rounded dark:text-white ${getStatusClass(status)} border-0 outline-none ${isLoading ? 'cursor-not-allowed' : 'cursor-pointer'}`}
             disabled={isLoading}
         >
             <option value="todo">To Do</option>
