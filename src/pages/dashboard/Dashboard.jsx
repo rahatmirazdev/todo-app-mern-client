@@ -1,14 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Link, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Link, Outlet, useLocation } from 'react-router-dom';
 import axiosPrivate from '../../services/api/axiosPrivate';
 import TodoSummaryWidget from '../../components/dashboard/TodoSummaryWidget';
 import { useNotification } from '../../context/NotificationContext';
 import NotificationPermissionPrompt from '../../components/notifications/NotificationPermissionPrompt';
-import Todo from './todo/Todo';
-import Analytics from './analytics/Analytics';
-import Calendar from './calendar/Calendar';
-import Settings from './settings/Settings';
 
 const Dashboard = () => {
   const { user } = useAuth();
