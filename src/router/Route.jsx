@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate, Outlet } from "react-router-dom";
 import MainLayout from "../layouts/main/MainLayout";
 import DashboardLayout from "../layouts/dashboard/DashboardLayout";
-import Home from "../pages/Home/Home";
 import Dashboard from "../pages/dashboard/Dashboard";
 import Analytics from "../pages/dashboard/analytics/Analytics";
 import Projects from "../pages/dashboard/projects/Projects";
