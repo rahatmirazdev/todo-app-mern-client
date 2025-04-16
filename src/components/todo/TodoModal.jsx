@@ -16,6 +16,7 @@ import OptimalTimeField from './scheduling/OptimalTimeField';
 import TaskTypeField from './scheduling/TaskTypeField';
 import TimeRecommendations from './scheduling/TimeRecommendations';
 import schedulerService from '../../services/schedulerService';
+import NaturalLanguageInput from './natural-language/NaturalLanguageInput';
 
 const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, onError }) => {
     const { createTodo, updateTodo, allTodos, fetchAllTodos } = useTodo();
@@ -45,6 +46,7 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
     const [loadingPreferences, setLoadingPreferences] = useState(true);
     const [loadingSubtaskSuggestions, setLoadingSubtaskSuggestions] = useState(false);
     const [subtaskSuggestions, setSubtaskSuggestions] = useState([]);
+    const [showAIAssistant, setShowAIAssistant] = useState(false);
 
     // Ensure we have the latest list of todos for dependency selection
     useEffect(() => {
@@ -275,6 +277,26 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
         }
     };
 
+    // Add handler for parsed task data
+    const handleTaskParsed = (parsedTask) => {
+        // Format dates if they exist in the parsed task
+        if (parsedTask.dueDate) {
+            parsedTask.dueDate = new Date(parsedTask.dueDate).toISOString().split('T')[0];
+        }
+
+        // Update the form data with the parsed task information
+        setFormData(prev => ({
+            ...prev,
+            ...parsedTask,
+        }));
+
+        // Close the assistant
+        setShowAIAssistant(false);
+
+        // Show success message
+        toast.success('Task details extracted with AI');
+    };
+
     if (!isOpen) return null;
 
     return (
@@ -294,9 +316,33 @@ const TodoModal = ({ isOpen, onClose, mode = 'create', todo = null, onSuccess, o
                                     {mode === 'create' ? 'Create New Todo' : 'Edit Todo'}
                                 </h3>
 
+                                {/* Add AI Assistant toggle button */}
+                                <div className="flex justify-end mt-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowAIAssistant(!showAIAssistant)}
+                                        className="text-sm flex items-center text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+                                    >
+                                        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                        </svg>
+                                        {showAIAssistant ? 'Hide AI Assistant' : 'Use AI Assistant'}
+                                    </button>
+                                </div>
+
                                 {error && (
                                     <div className="mt-2 p-2 bg-red-100 text-red-700 rounded">
                                         {error}
+                                    </div>
+                                )}
+
+                                {/* Add AI Assistant component */}
+                                {showAIAssistant && (
+                                    <div className="mb-4 mt-3">
+                                        <NaturalLanguageInput
+                                            onTaskParsed={handleTaskParsed}
+                                            onClose={() => setShowAIAssistant(false)}
+                                        />
                                     </div>
                                 )}
 
