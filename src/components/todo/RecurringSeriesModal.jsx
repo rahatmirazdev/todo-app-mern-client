@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useTodo } from '../../context/TodoContext';
 
 const RecurringSeriesModal = ({ isOpen, onClose, todoId, todoTitle }) => {
@@ -7,13 +7,10 @@ const RecurringSeriesModal = ({ isOpen, onClose, todoId, todoTitle }) => {
     const [error, setError] = useState('');
     const { getRecurringSeries } = useTodo();
 
-    useEffect(() => {
-        if (isOpen && todoId) {
-            fetchSeries();
-        }
-    }, [isOpen, todoId]);
+    // Memoize the fetch function to prevent it from being recreated on each render
+    const fetchSeries = useCallback(async () => {
+        if (!todoId) return;
 
-    const fetchSeries = async () => {
         try {
             setLoading(true);
             const seriesData = await getRecurringSeries(todoId);
@@ -24,7 +21,14 @@ const RecurringSeriesModal = ({ isOpen, onClose, todoId, todoTitle }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [todoId, getRecurringSeries]);
+
+    // Only fetch when the modal opens and the todoId is available
+    useEffect(() => {
+        if (isOpen && todoId) {
+            fetchSeries();
+        }
+    }, [isOpen, todoId, fetchSeries]);
 
     if (!isOpen) return null;
 
@@ -83,10 +87,10 @@ const RecurringSeriesModal = ({ isOpen, onClose, todoId, todoTitle }) => {
                                                             </td>
                                                             <td className="px-3 py-2 whitespace-nowrap">
                                                                 <span className={`text-xs px-2 py-1 rounded-full ${todo.status === 'completed'
-                                                                        ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                                                        : todo.status === 'in_progress'
-                                                                            ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
-                                                                            : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                                                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                                                    : todo.status === 'in_progress'
+                                                                        ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+                                                                        : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                                                                     }`}>
                                                                     {todo.status === 'in_progress' ? 'In Progress' :
                                                                         todo.status.charAt(0).toUpperCase() + todo.status.slice(1)}

@@ -92,6 +92,7 @@ const TodoList = ({ todos, loading, sortConfig, onSortChange, onEdit, pagination
 
     // Handle viewing recurring series
     const handleViewSeries = (todoId, todoTitle) => {
+        // Reset the state completely before opening to prevent stale data
         setSeriesModal({
             isOpen: true,
             todoId,

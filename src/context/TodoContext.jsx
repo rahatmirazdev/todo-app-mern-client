@@ -227,20 +227,22 @@ export const TodoProvider = ({ children }) => {
         }
     }, [todos, axiosPrivate, showTaskUpdate]);
 
-    // New function to get recurring series
+    // New function to get recurring series without affecting global loading state
     const getRecurringSeries = useCallback(async (recurringId) => {
-        setLoading(true);
-        setError(null);
-
         try {
+            // Don't set the global loading state
+            // setLoading(true);
+            // setError(null);
+
             const response = await axiosPrivate.get(`/todos/series/${recurringId}`);
             return response.data;
         } catch (err) {
-            setError(err.message || 'Failed to fetch recurring series');
+            // Just log the error locally, don't set global error state
             console.error('Error fetching recurring series:', err);
             throw err;
         } finally {
-            setLoading(false);
+            // Don't reset global loading state
+            // setLoading(false);
         }
     }, [axiosPrivate]);
 
