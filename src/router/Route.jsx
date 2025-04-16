@@ -16,6 +16,7 @@ import About from "../pages/about/About";
 import Todo from "../pages/dashboard/todo/Todo";
 import { TodoProvider } from "../context/TodoContext";
 import ErrorBoundary from '../components/shared/ErrorBoundary';
+import Home from "../pages/home/Home";
 
 // Protected route component
 const ProtectedRoute = () => {
