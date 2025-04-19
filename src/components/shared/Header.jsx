@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import logo from '../../assets/logo.png';
 
 const Header = () => {
     const { user, logout } = useAuth();
@@ -18,9 +19,9 @@ const Header = () => {
                     {/* Logo/Brand */}
                     <Link to="/" className="flex items-center space-x-2">
                         <div className="bg-indigo-600 text-white p-2 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
+                            <div className="h-6 w-6 rounded">
+                                <img src={logo} alt="Taski Logo" className='rounded bg-white' />
+                            </div>
                         </div>
                         <span className="text-xl font-bold text-gray-800 dark:text-white">Taski</span>
                     </Link>

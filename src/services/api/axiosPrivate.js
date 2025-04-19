@@ -26,12 +26,15 @@ const processFailedRequests = (token) => {
 // Add a request interceptor to add authorization header with token
 axiosPrivate.interceptors.request.use(
     (config) => {
-        // Get token from localStorage
-        const token = localStorage.getItem('userToken');
+        // Only add the Authorization header if it doesn't exist already
+        if (!config.headers['Authorization']) {
+            // Get token from localStorage
+            const token = localStorage.getItem('userToken');
 
-        // If token exists, add it to the headers
-        if (token) {
-            config.headers['Authorization'] = `Bearer ${token}`;
+            // If token exists, add it to the headers
+            if (token) {
+                config.headers['Authorization'] = `Bearer ${token}`;
+            }
         }
 
         return config;

@@ -22,8 +22,13 @@ export const AuthProvider = ({ children }) => {
                     // Only validate token if it hasn't been validated yet
                     if (!tokenValidated) {
                         try {
-                            // Validate token with backend
-                            const response = await axiosPrivate.get('/auth/validate-token');
+                            // Validate token with backend - explicitly setting the token in the header
+                            const response = await axiosPrivate.get('/auth/validate-token', {
+                                headers: {
+                                    'Authorization': `Bearer ${storedToken}`
+                                }
+                            });
+
                             if (response.data.valid) {
                                 setUser(JSON.parse(storedUser));
                                 setTokenValidated(true);
@@ -43,6 +48,9 @@ export const AuthProvider = ({ children }) => {
                         // Token was already validated, just use stored user
                         setUser(JSON.parse(storedUser));
                     }
+                } else {
+                    // No stored user or token
+                    setLoading(false);
                 }
             } catch (error) {
                 console.error('Error checking authentication status:', error);

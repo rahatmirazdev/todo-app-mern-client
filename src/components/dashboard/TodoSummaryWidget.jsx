@@ -53,7 +53,7 @@ const TodoSummaryWidget = () => {
                             >
                                 High Priority
                             </Link>
-                            <span className="text-sm font-medium">{summary.priority.high}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.priority.high}</span>
                         </div>
                         <div className="flex justify-between">
                             <Link
@@ -62,7 +62,7 @@ const TodoSummaryWidget = () => {
                             >
                                 Medium Priority
                             </Link>
-                            <span className="text-sm font-medium">{summary.priority.medium}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.priority.medium}</span>
                         </div>
                         <div className="flex justify-between">
                             <Link
@@ -71,7 +71,7 @@ const TodoSummaryWidget = () => {
                             >
                                 Low Priority
                             </Link>
-                            <span className="text-sm font-medium">{summary.priority.low}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.priority.low}</span>
                         </div>
                     </div>
                 </div>
@@ -86,7 +86,7 @@ const TodoSummaryWidget = () => {
                             >
                                 Overdue
                             </Link>
-                            <span className="text-sm font-medium">{summary.dueDate.overdue}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.dueDate.overdue}</span>
                         </div>
                         <div className="flex justify-between">
                             <Link
@@ -95,7 +95,7 @@ const TodoSummaryWidget = () => {
                             >
                                 Due Today
                             </Link>
-                            <span className="text-sm font-medium">{summary.dueDate.today}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.dueDate.today}</span>
                         </div>
                         <div className="flex justify-between">
                             <Link
@@ -104,7 +104,7 @@ const TodoSummaryWidget = () => {
                             >
                                 Upcoming
                             </Link>
-                            <span className="text-sm font-medium">{summary.dueDate.upcoming}</span>
+                            <span className="text-sm font-medium dark:text-white">{summary.dueDate.upcoming}</span>
                         </div>
                     </div>
                 </div>
