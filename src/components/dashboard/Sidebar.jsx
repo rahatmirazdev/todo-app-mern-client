@@ -2,6 +2,7 @@ import { useState, useEffect, useLayoutEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import Logo from '../shared/Logo';
 
 const Sidebar = ({ isExpanded, toggleSidebar }) => {
     // Determine if mobile before first render
@@ -158,15 +159,10 @@ const Sidebar = ({ isExpanded, toggleSidebar }) => {
 
                 {/* Sidebar Header */}
                 <div className={`flex items-center justify-between h-16 px-4 border-b dark:border-gray-700 ${isExpanded ? '' : 'justify-center'}`}>
-                    {isExpanded && (
-                        <div className="flex items-center space-x-2">
-                            <div className="bg-indigo-600 text-white p-1.5 rounded-md">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                                </svg>
-                            </div>
-                            <span className="text-lg font-semibold dark:text-white">Taski</span>
-                        </div>
+                    {isExpanded ? (
+                        <Logo size="default" linkTo="/dashboard" />
+                    ) : (
+                        <Logo size="small" showText={false} linkTo="/dashboard" />
                     )}
 
                     {/* Desktop toggle button - FIXED THIS SECTION */}

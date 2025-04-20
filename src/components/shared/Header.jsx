@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
-import logo from '../../assets/logo.png';
+import Logo from './Logo';
 
 const Header = () => {
     const { user, logout } = useAuth();
@@ -17,14 +17,7 @@ const Header = () => {
             <div className="container mx-auto px-4 py-3">
                 <div className="flex items-center justify-between">
                     {/* Logo/Brand */}
-                    <Link to="/" className="flex items-center space-x-2">
-                        <div className="bg-indigo-600 text-white p-2 rounded-lg">
-                            <div className="h-6 w-6 rounded">
-                                <img src={logo} alt="Taski Logo" className='rounded bg-white' />
-                            </div>
-                        </div>
-                        <span className="text-xl font-bold text-gray-800 dark:text-white">Taski</span>
-                    </Link>
+                    <Logo />
 
                     {/* Desktop Navigation */}
                     <nav className="hidden md:flex items-center space-x-8">
