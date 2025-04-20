@@ -227,6 +227,7 @@ const DashboardLayout = () => {
                                     src={user?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
                                     alt="User Avatar"
                                     className="w-8 h-8 rounded-full border-2 border-transparent hover:border-indigo-500 transition-colors"
+                                    referrerPolicy="no-referrer"
                                 />
                             </button>
                         </div>

@@ -192,6 +192,7 @@ const Sidebar = ({ isExpanded, toggleSidebar }) => {
                             src={user?.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || 'User')}&background=0D8ABC&color=fff`}
                             alt="User Avatar"
                             className="w-10 h-10 rounded-full border-2 border-indigo-500"
+                            referrerPolicy="no-referrer"
                         />
                         <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></span>
                     </div>

@@ -41,6 +41,8 @@ const Header = () => {
                                             src={user.profilePicture || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=0D8ABC&color=fff`}
                                             alt="User Avatar"
                                             className="w-8 h-8 rounded-full"
+                                            referrerPolicy="no-referrer"
+
                                         />
                                     </Link>
                                 </div>

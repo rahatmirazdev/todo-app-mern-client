@@ -94,6 +94,7 @@ const AccountSettings = () => {
                                 src={formData.profilePicture}
                                 alt="Profile preview"
                                 className="w-12 h-12 rounded-full object-cover mr-2"
+                                referrerPolicy="no-referrer"
                                 onError={(e) => {
                                     e.target.onerror = null;
                                     e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=0D8ABC&color=fff`;

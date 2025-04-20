@@ -36,6 +36,7 @@ const Hero = () => {
                                                 className="inline-block h-8 w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
                                                 src={`https://randomuser.me/api/portraits/women/${i + 10}.jpg`}
                                                 alt="User avatar"
+                                                referrerPolicy="no-referrer"
                                             />
                                         ))}
                                     </div>
