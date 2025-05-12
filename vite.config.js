@@ -10,11 +10,20 @@ export default defineConfig({
       // These headers are required for Firebase popup authentication
       'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
       'Cross-Origin-Embedder-Policy': 'unsafe-none'
-    },
-    proxy: {
+    }, proxy: {
       // Proxy API requests to backend
       '/api': {
-        target: 'http://localhost:5000',
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://todo-app-mern-server-a9rx.onrender.com'
+          : 'http://localhost:5000',
+        changeOrigin: true,
+        secure: false
+      },
+      // Proxy root path for backend status checks
+      '^/$': {
+        target: process.env.NODE_ENV === 'production'
+          ? 'https://todo-app-mern-server-a9rx.onrender.com'
+          : 'http://localhost:5000',
         changeOrigin: true,
         secure: false
       }

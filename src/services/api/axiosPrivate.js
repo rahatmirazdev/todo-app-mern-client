@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 // Get base URL from environment variables or use default
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+    import.meta.env.PROD
+        ? 'https://todo-app-mern-server-a9rx.onrender.com'
+        : ''  // Empty base URL to use the proxy in development
+);
 
 // Create an axios instance for authenticated API calls
 const axiosPrivate = axios.create({
@@ -56,12 +60,10 @@ axiosPrivate.interceptors.response.use(
         if (error.response?.status === 401 && !originalRequest._retry) {
             if (error.response.data.message === 'Token expired' && !isRefreshing) {
                 isRefreshing = true;
-                originalRequest._retry = true;
-
-                try {
+                originalRequest._retry = true; try {
                     // Try to refresh the token
                     const response = await axios.post(
-                        `${API_BASE_URL}/api/auth/refresh-token`,
+                        `/api/auth/refresh-token`,
                         {},
                         { withCredentials: true }
                     );

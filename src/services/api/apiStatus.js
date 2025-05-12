@@ -1,12 +1,16 @@
 import axios from 'axios';
 
 // Base URL that can be configured from environment variables
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+    import.meta.env.PROD
+        ? 'https://todo-app-mern-server-a9rx.onrender.com'
+        : ''  // Empty base URL to use the proxy in development
+);
 
 // Check if the backend server is available
 export const checkBackendStatus = async () => {
     try {
-        const response = await axios.get(`${API_BASE_URL}`, {
+        const response = await axios.get(`${API_BASE_URL}${import.meta.env.PROD ? '/' : '/'}`, {
             timeout: 3000,  // 3 second timeout for faster feedback
             validateStatus: () => true // Accept any status code
         });

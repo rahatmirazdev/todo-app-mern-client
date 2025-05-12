@@ -1,7 +1,11 @@
 import axios from 'axios';
 
 // Get base URL from environment variables or use default
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+const API_BASE_URL = import.meta.env.VITE_API_URL || (
+    import.meta.env.PROD
+        ? 'https://todo-app-mern-server-a9rx.onrender.com'
+        : ''  // Empty base URL to use the proxy in development
+);
 
 // Create an axios instance for public API calls (no auth required)
 const axiosPublic = axios.create({
