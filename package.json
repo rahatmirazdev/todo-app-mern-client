@@ -16,7 +16,7 @@
     "chartjs-adapter-date-fns": "^3.0.0",
     "date-fns": "^4.1.0",
     "firebase": "^11.6.0",
-    "html-to-image": "^1.11.13",
+    "html-to-image": "1.10.8",
     "jspdf": "2.5.1",
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",
