@@ -10,19 +10,55 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || (
 // Check if the backend server is available
 export const checkBackendStatus = async () => {
     try {
-        // In production, use the API_BASE_URL/api endpoint instead of root
-        // This helps avoid CORS issues since our API routes have proper CORS setup
-        const endpoint = import.meta.env.PROD ? `${API_BASE_URL}/api/users/status` : API_BASE_URL;
+        console.log('Checking backend status at:', API_BASE_URL);
 
-        const response = await axios.get(endpoint, {
-            timeout: 5000,  // 5 second timeout for slower server startup
-            validateStatus: () => true, // Accept any status code
-        });
+        // Try multiple different approaches to handle potential CORS issues
+        try {
+            // First try a simple GET request to the root
+            const response = await axios.get(API_BASE_URL, {
+                timeout: 8000,  // 8 second timeout for render.com cold start
+                validateStatus: () => true, // Accept any status code
+                withCredentials: false, // Don't send cookies for the status check
+            });
 
-        // Consider the API available if we got any response at all
-        return response.status < 500;
+            console.log('Backend response status:', response.status);
+            if (response.status < 400) {
+                return true;
+            }
+        } catch (firstError) {
+            console.log('First check failed:', firstError.message);
+        }
+
+        // If that fails, try a different approach with no-cors mode through a HEAD request
+        try {
+            const headResponse = await fetch(API_BASE_URL, {
+                method: 'HEAD',
+                mode: 'no-cors', // This might help with CORS preflight issues
+            });
+            console.log('HEAD response received');
+            return true; // If we get here without error, connection is likely good
+        } catch (secondError) {
+            console.log('Second check failed:', secondError.message);
+        }
+
+        // As a last resort, try fetching via a proxy if available in development mode
+        if (!import.meta.env.PROD) {
+            try {
+                const proxyResponse = await axios.get('/api/users/status', {
+                    timeout: 5000,
+                });
+                console.log('Proxy check succeeded');
+                return true;
+            } catch (thirdError) {
+                console.log('Proxy check failed:', thirdError.message);
+            }
+        }
+
+        // If all checks fail, return false
+        return false;
     } catch (error) {
         console.warn('Backend server not available:', error.message);
+        console.error('Error details:', error);
         return false;
     }
 };
